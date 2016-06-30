@@ -33,7 +33,8 @@ namespace Nop.Web.Models.Order
         public bool IsReturnRequestAllowed { get; set; }
         
         public bool IsShippable { get; set; }
-        public bool PickUpInStore { get; set; }
+        public bool PickupInStore { get; set; }
+        public AddressModel PickupAddress { get; set; }
         public string ShippingStatus { get; set; }
         public AddressModel ShippingAddress { get; set; }
         public string ShippingMethod { get; set; }

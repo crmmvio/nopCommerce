@@ -1025,6 +1025,81 @@ set @resources='
   <LocaleResource Name="Admin.Catalog.Products.Fields.StockQuantity.ChangedWarning">
     <Value>Quantity has been changed while you were editing the product. Changes haven''t been saved. Please ensure that everything is correct and click "Save" button one more time.</Value>
   </LocaleResource>
+  <LocaleResource Name="Checkout.PickUpInStore">
+    <Value></Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickUpInStore.Description">
+    <Value></Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickUpInStore.MethodName">
+    <Value></Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Shipping.PickupPointProviders">
+    <Value>Pickup point providers</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Shipping.PickupPointProviders.BackToList">
+    <Value>back to pickup point provider list</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Shipping.PickupPointProviders.Configure">
+    <Value>Configure</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Shipping.PickupPointProviders.Fields.DisplayOrder">
+    <Value>Display order</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Shipping.PickupPointProviders.Fields.FriendlyName">
+    <Value>Friendly name</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Shipping.PickupPointProviders.Fields.IsActive">
+    <Value>Is active</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Shipping.PickupPointProviders.Fields.Logo">
+    <Value>Logo</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Shipping.PickupPointProviders.Fields.SystemName">
+    <Value>System name</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Shipping.PickupPoints">
+    <Value>Pickup points</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Orders.Fields.PickupAddress">
+    <Value>Pickup point address</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Orders.Fields.PickupAddress.Hint">
+    <Value>Pickup point address info.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Orders.Fields.PickupAddress.ViewOnGoogleMaps">
+    <Value>View address on Google Maps</Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickupPoints">
+    <Value>Pickup</Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickupPoints.Description">
+    <Value>Pick up your items at the pickup point</Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickupPoints.FreeShipping">
+    <Value>Free shipping</Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickupPoints.Name">
+    <Value>Pickup at {0}</Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickupPoints.PickupInStore">
+    <Value>store</Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickupPoints.PickupInStore.Address">
+    <Value>Pick up your items at the store (put your store address here)</Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickupPoints.SelectPickupPoint">
+    <Value>Select pickup point</Value>
+  </LocaleResource>
+  <LocaleResource Name="Order.PickupAddress">
+    <Value>Pickup point address</Value>
+  </LocaleResource>
+  <LocaleResource Name="Order.Shipments.PickupAddress">
+    <Value>Pickup point address</Value>
+  </LocaleResource>
+  <LocaleResource Name="PDFInvoice.Pickup">
+    <Value>Pickup point:</Value>
+  </LocaleResource>
 </Language>
 '
 
@@ -3589,8 +3664,6 @@ GO
  GO
  GO
 
-
-
 --new column
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=object_id('[Discount]') and NAME='IsCumulative')
 BEGIN
@@ -3623,7 +3696,6 @@ GO
  END
  GO
 
- 
 --new activity types
 IF NOT EXISTS (SELECT 1 FROM [ActivityLogType] WHERE [SystemKeyword] = N'EditActivityLogTypes')
 BEGIN
@@ -3638,4 +3710,38 @@ BEGIN
 	INSERT [ActivityLogType] ([SystemKeyword], [Name], [Enabled])
 	VALUES (N'DeleteActivityLog', N'Delete activity log', N'true')
 END
+GO
+
+--new setting
+ IF NOT EXISTS (SELECT 1 FROM [Setting] WHERE [name] = N'shippingsettings.activepickuppointprovidersystemnames')
+ BEGIN
+ 	INSERT [Setting] ([Name], [Value], [StoreId])
+ 	VALUES (N'shippingsettings.activepickuppointprovidersystemnames', N'', 0)
+ END
+ GO
+
+ --drop column
+IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=object_id('[Order]') and NAME='PickUpInStore')
+BEGIN
+	ALTER TABLE [Order] DROP COLUMN [PickUpInStore]
+END
+GO
+
+ --new column
+IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=object_id('[Order]') and NAME='PickupAddressId')
+BEGIN
+	ALTER TABLE [Order]
+	ADD [PickupAddressId] int NULL
+END
+GO
+
+IF EXISTS (SELECT 1 FROM sys.objects WHERE name = 'Order_PickupAddress' AND parent_object_id = Object_id('Order') AND Objectproperty(object_id, N'IsForeignKey') = 1)
+BEGIN
+    ALTER TABLE [dbo].[Order]
+    DROP CONSTRAINT [Order_PickupAddress]
+END
+GO
+
+ ALTER TABLE [dbo].[Order] WITH CHECK ADD CONSTRAINT [Order_PickupAddress] FOREIGN KEY([PickupAddressId])
+REFERENCES [dbo].[Address] ([Id])
 GO

@@ -372,7 +372,20 @@ namespace Nop.Services.Common
                     //cell = new PdfPCell();
                     //cell.Border = Rectangle.NO_BORDER;
 
-                    if (!order.PickUpInStore)
+                    if (order.PickupAddress != null)
+                    {
+                        shippingAddress.AddCell(new Paragraph(_localizationService.GetResource("PDFInvoice.Pickup", lang.Id), titleFont));
+                        if (!string.IsNullOrEmpty(order.PickupAddress.Address1))
+                            shippingAddress.AddCell(new Paragraph(string.Format("   {0}", string.Format(_localizationService.GetResource("PDFInvoice.Address", lang.Id), order.PickupAddress.Address1)), font));
+                        if (!string.IsNullOrEmpty(order.PickupAddress.City))
+                            shippingAddress.AddCell(new Paragraph(string.Format("   {0}", order.PickupAddress.City), font));
+                        if (order.PickupAddress.Country != null)
+                            shippingAddress.AddCell(new Paragraph(string.Format("   {0}", order.PickupAddress.Country.GetLocalized(x => x.Name, lang.Id)), font));
+                        if (!string.IsNullOrEmpty(order.PickupAddress.ZipPostalCode))
+                            shippingAddress.AddCell(new Paragraph(string.Format("   {0}", order.PickupAddress.ZipPostalCode), font));
+                        shippingAddress.AddCell(new Paragraph(" "));
+                    }
+                    else
                     {
                         if (order.ShippingAddress == null)
                             throw new NopException(string.Format("Shipping is required, but address is not available. Order ID = {0}", order.Id));
@@ -1011,7 +1024,20 @@ namespace Nop.Services.Common
                 addressTable.AddCell(new Paragraph(String.Format(_localizationService.GetResource("PDFPackagingSlip.Shipment", lang.Id), shipment.Id), titleFont));
                 addressTable.AddCell(new Paragraph(String.Format(_localizationService.GetResource("PDFPackagingSlip.Order", lang.Id), order.Id), titleFont));
 
-                if (!order.PickUpInStore)
+                if (order.PickupAddress != null)
+                {
+                    addressTable.AddCell(new Paragraph(_localizationService.GetResource("PDFInvoice.Pickup", lang.Id), titleFont));
+                    if (!string.IsNullOrEmpty(order.PickupAddress.Address1))
+                        addressTable.AddCell(new Paragraph(string.Format("   {0}", string.Format(_localizationService.GetResource("PDFInvoice.Address", lang.Id), order.PickupAddress.Address1)), font));
+                    if (!string.IsNullOrEmpty(order.PickupAddress.City))
+                        addressTable.AddCell(new Paragraph(string.Format("   {0}", order.PickupAddress.City), font));
+                    if (order.PickupAddress.Country != null)
+                        addressTable.AddCell(new Paragraph(string.Format("   {0}", order.PickupAddress.Country.GetLocalized(x => x.Name, lang.Id)), font));
+                    if (!string.IsNullOrEmpty(order.PickupAddress.ZipPostalCode))
+                        addressTable.AddCell(new Paragraph(string.Format("   {0}", order.PickupAddress.ZipPostalCode), font));
+                    addressTable.AddCell(new Paragraph(" "));
+                }
+                else
                 {
                     if (order.ShippingAddress == null)
                         throw new NopException(string.Format("Shipping is required, but address is not available. Order ID = {0}", order.Id));

@@ -62,8 +62,6 @@ namespace Nop.Web.Controllers
         private readonly IAddressAttributeService _addressAttributeService;
         private readonly IAddressAttributeFormatter _addressAttributeFormatter;
 
-        
-
         private readonly OrderSettings _orderSettings;
         private readonly RewardPointsSettings _rewardPointsSettings;
         private readonly PaymentSettings _paymentSettings;
@@ -210,15 +208,59 @@ namespace Nop.Web.Controllers
             bool prePopulateNewAddressWithCustomerFields = false, string overrideAttributesXml = "")
         {
             var model = new CheckoutShippingAddressModel();
+
             //allow pickup in store?
-            model.AllowPickUpInStore = _shippingSettings.AllowPickUpInStore;
-            if (model.AllowPickUpInStore && _shippingSettings.PickUpInStoreFee > 0)
+            model.AllowPickupInStore = _shippingSettings.AllowPickUpInStore;
+            if (model.AllowPickupInStore)
             {
-                decimal shippingTotal = _shippingSettings.PickUpInStoreFee;
-                decimal rateBase = _taxService.GetShippingPrice(shippingTotal, _workContext.CurrentCustomer);
-                decimal rate = _currencyService.ConvertFromPrimaryStoreCurrency(rateBase, _workContext.WorkingCurrency);
-                model.PickUpInStoreFee = _priceFormatter.FormatShippingPrice(rate, true);
+                if (_shippingService.LoadActivePickupPointProviders(_storeContext.CurrentStore.Id).Any())
+                {
+                    var pickupPointsResponse = _shippingService.GetPickupPoints(_workContext.CurrentCustomer.BillingAddress, null, _storeContext.CurrentStore.Id);
+                    if (pickupPointsResponse.Success)
+                    {
+                        model.PickupPoints = pickupPointsResponse.PickupPoints.Select(x =>
+                        {
+                            var country = _countryService.GetCountryByTwoLetterIsoCode(x.CountryCode);
+                            var pickupPointModel = new CheckoutPickupPointModel
+                            {
+                                Id = x.Id,
+                                Name = x.Name,
+                                Description = x.Description,
+                                ProviderSystemName = x.ProviderSystemName,
+                                Address = x.Address,
+                                City = x.City,
+                                CountryName = country != null ? country.Name : string.Empty,
+                                ZipPostalCode = x.ZipPostalCode,
+                                Latitude = x.Latitude,
+                                Longitude = x.Longitude,
+                                OpeningHours = x.OpeningHours
+                            };
+                            if (x.PickupFee > 0)
+                            {
+                                var amount = _taxService.GetShippingPrice(x.PickupFee, _workContext.CurrentCustomer);
+                                amount = _currencyService.ConvertFromPrimaryStoreCurrency(amount, _workContext.WorkingCurrency);
+                                pickupPointModel.PickupFee = _priceFormatter.FormatShippingPrice(amount, true);
+                            }
+                            else
+                                pickupPointModel.PickupFee = _localizationService.GetResource("Checkout.PickupPoints.FreeShipping");
+
+                            return pickupPointModel;
+                        }).ToList();
+                    }
+                    else
+                        foreach (var error in pickupPointsResponse.Errors)
+                            model.Warnings.Add(error);
+                }
+
+                //only available pickup points
+                if ( _shippingService.LoadActiveShippingRateComputationMethods(_storeContext.CurrentStore.Id).Count == 0)
+                {
+                    model.PickupInStoreOnly = true;
+                    model.PickupInStore = true;
+                    return model;
+                }
             }
+
             //existing addresses
             var addresses = _workContext.CurrentCustomer.Addresses
                 .Where(a => a.Country == null || 
@@ -254,6 +296,7 @@ namespace Nop.Web.Controllers
                 prePopulateWithCustomerFields: prePopulateNewAddressWithCustomerFields,
                 customer: _workContext.CurrentCustomer,
                 overrideAttributesXml: overrideAttributesXml);
+
             return model;
         }
 
@@ -585,6 +628,7 @@ namespace Nop.Web.Controllers
 
             return View(model);
         }
+
         public ActionResult SelectBillingAddress(int addressId, bool shipToSameAddress = false)
         {
             var address = _workContext.CurrentCustomer.Addresses.FirstOrDefault(a => a.Id == addressId);
@@ -606,13 +650,14 @@ namespace Nop.Web.Controllers
                 _customerService.UpdateCustomer(_workContext.CurrentCustomer);
                 //reset selected shipping method (in case if "pick up in store" was selected)
                 _genericAttributeService.SaveAttribute<ShippingOption>(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedShippingOption, null, _storeContext.CurrentStore.Id);
-                _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickUpInStore, false, _storeContext.CurrentStore.Id);
+                _genericAttributeService.SaveAttribute<PickupPoint>(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickupPoint, null, _storeContext.CurrentStore.Id);
                 //limitation - "Ship to the same address" doesn't properly work in "pick up in store only" case (when no shipping plugins are available) 
                 return RedirectToRoute("CheckoutShippingMethod");
             }
 
             return RedirectToRoute("CheckoutShippingAddress");
         }
+
         [HttpPost, ActionName("BillingAddress")]
         [FormValueRequired("nextstep")]
         [ValidateInput(false)]
@@ -672,7 +717,7 @@ namespace Nop.Web.Controllers
                     _customerService.UpdateCustomer(_workContext.CurrentCustomer);
                     //reset selected shipping method (in case if "pick up in store" was selected)
                     _genericAttributeService.SaveAttribute<ShippingOption>(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedShippingOption, null, _storeContext.CurrentStore.Id);
-                    _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickUpInStore, false, _storeContext.CurrentStore.Id);
+                    _genericAttributeService.SaveAttribute<PickupPoint>(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickupPoint, null, _storeContext.CurrentStore.Id);
                     //limitation - "Ship to the same address" doesn't properly work in "pick up in store only" case (when no shipping plugins are available) 
                     return RedirectToRoute("CheckoutShippingMethod");
                 }
@@ -713,13 +758,10 @@ namespace Nop.Web.Controllers
 
             //model
             var model = PrepareShippingAddressModel(prePopulateNewAddressWithCustomerFields: true);
-            if (_shippingSettings.AllowPickUpInStore && !_shippingService.LoadActiveShippingRateComputationMethods(_storeContext.CurrentStore.Id).Any())
-            {
-                model.PickUpInStoreOnly = true;
-                model.PickUpInStore = true;
-            }
+
             return View(model);
         }
+
         public ActionResult SelectShippingAddress(int addressId)
         {
             var address = _workContext.CurrentCustomer.Addresses.FirstOrDefault(a => a.Id == addressId);
@@ -732,11 +774,12 @@ namespace Nop.Web.Controllers
             if (_shippingSettings.AllowPickUpInStore)
             {
                 //set value indicating that "pick up in store" option has not been chosen
-                _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickUpInStore, false, _storeContext.CurrentStore.Id);
+                _genericAttributeService.SaveAttribute<PickupPoint>(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickupPoint, null, _storeContext.CurrentStore.Id);
             }
 
             return RedirectToRoute("CheckoutShippingMethod");
         }
+
         [HttpPost, ActionName("ShippingAddress")]
         [FormValueRequired("nextstep")]
         [ValidateInput(false)]
@@ -763,40 +806,49 @@ namespace Nop.Web.Controllers
                 return RedirectToRoute("CheckoutShippingMethod");
             }
 
-
-            //Pick up in store?
+            //pickup point
             if (_shippingSettings.AllowPickUpInStore)
             {
-                if (model.PickUpInStore)
+                if (model.PickupInStore)
                 {
-                    //customer decided to pick up in store
-
                     //no shipping address selected
                     _workContext.CurrentCustomer.ShippingAddress = null;
                     _customerService.UpdateCustomer(_workContext.CurrentCustomer);
 
-                    //set value indicating that "pick up in store" option has been chosen
-                    _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickUpInStore, true, _storeContext.CurrentStore.Id);
+                    PickupPoint selectedPoint;
+                    var selectedValue = form["pickup-points_id"];
+                    if (selectedValue != null)
+                    {
+                        var pickupPoint = selectedValue.Split(new[] { "___" }, StringSplitOptions.None);
+                        var pickupPoints = _shippingService
+                            .GetPickupPoints(_workContext.CurrentCustomer.BillingAddress, pickupPoint[1], _storeContext.CurrentStore.Id).PickupPoints.ToList();
+                        selectedPoint = pickupPoints.FirstOrDefault(x => x.Id.Equals(pickupPoint[0]));
+                        if (selectedPoint == null)
+                            return RedirectToRoute("CheckoutShippingAddress");
+                    }
+                    else
+                        selectedPoint = new PickupPoint
+                        {
+                            Name = _localizationService.GetResource("Checkout.PickupPoints.PickupInStore"),
+                            PickupFee = _shippingSettings.PickUpInStoreFee
+                        };
 
-                    //save "pick up in store" shipping method
                     var pickUpInStoreShippingOption = new ShippingOption
                     {
-                        Name = _localizationService.GetResource("Checkout.PickUpInStore.MethodName"),
-                        Rate = _shippingSettings.PickUpInStoreFee,
-                        Description = null,
-                        ShippingRateComputationMethodSystemName = null
+                        Name = string.Format(_localizationService.GetResource("Checkout.PickupPoints.Name"), selectedPoint.Name),
+                        Rate = selectedPoint.PickupFee,
+                        Description = selectedPoint.Description,
+                        ShippingRateComputationMethodSystemName = selectedPoint.ProviderSystemName
                     };
-                    _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer,
-                        SystemCustomerAttributeNames.SelectedShippingOption,
-                        pickUpInStoreShippingOption,
-                        _storeContext.CurrentStore.Id);
 
-                    //load next step
-                    return RedirectToRoute("CheckoutShippingMethod");
+                    _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedShippingOption, pickUpInStoreShippingOption, _storeContext.CurrentStore.Id);
+                    _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickupPoint, selectedPoint, _storeContext.CurrentStore.Id);
+
+                    return RedirectToRoute("CheckoutPaymentMethod");
                 }
 
                 //set value indicating that "pick up in store" option has not been chosen
-                _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickUpInStore, false, _storeContext.CurrentStore.Id);
+                _genericAttributeService.SaveAttribute<PickupPoint>(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickupPoint, null, _storeContext.CurrentStore.Id);
             }
 
             //custom address attributes
@@ -842,7 +894,6 @@ namespace Nop.Web.Controllers
             return View(model);
         }
         
-
         public ActionResult ShippingMethod()
         {
             //validation
@@ -863,18 +914,7 @@ namespace Nop.Web.Controllers
             {
                 _genericAttributeService.SaveAttribute<ShippingOption>(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedShippingOption, null, _storeContext.CurrentStore.Id);
                 return RedirectToRoute("CheckoutPaymentMethod");
-            }
-
-            if (_shippingSettings.AllowPickUpInStore)
-            {
-                //customer decided to pick up in store?
-                var pickUpInStore = _workContext.CurrentCustomer.GetAttribute<bool>(SystemCustomerAttributeNames.SelectedPickUpInStore, 
-                    _storeContext.CurrentStore.Id);
-                if (pickUpInStore)
-                {
-                    return RedirectToRoute("CheckoutPaymentMethod");
                 }
-            }
             
             //model
             var model = PrepareShippingMethodModel(cart, _workContext.CurrentCustomer.ShippingAddress);
@@ -893,6 +933,7 @@ namespace Nop.Web.Controllers
 
             return View(model);
         }
+
         [HttpPost, ActionName("ShippingMethod")]
         [FormValueRequired("nextstep")]
         [ValidateInput(false)]
@@ -957,7 +998,6 @@ namespace Nop.Web.Controllers
             return RedirectToRoute("CheckoutPaymentMethod");
         }
         
-        
         public ActionResult PaymentMethod()
         {
             //validation
@@ -1011,6 +1051,7 @@ namespace Nop.Web.Controllers
 
             return View(paymentMethodModel);
         }
+
         [HttpPost, ActionName("PaymentMethod")]
         [FormValueRequired("nextstep")]
         [ValidateInput(false)]
@@ -1063,7 +1104,6 @@ namespace Nop.Web.Controllers
             return RedirectToRoute("CheckoutPaymentInfo");
         }
 
-
         public ActionResult PaymentInfo()
         {
             //validation
@@ -1110,6 +1150,7 @@ namespace Nop.Web.Controllers
             var model = PreparePaymentInfoModel(paymentMethod);
             return View(model);
         }
+
         [HttpPost, ActionName("PaymentInfo")]
         [FormValueRequired("nextstep")]
         [ValidateInput(false)]
@@ -1167,7 +1208,6 @@ namespace Nop.Web.Controllers
             return View(model);
         }
         
-
         public ActionResult Confirm()
         {
             //validation
@@ -1188,6 +1228,7 @@ namespace Nop.Web.Controllers
             var model = PrepareConfirmOrderModel(cart);
             return View(model);
         }
+
         [HttpPost, ActionName("Confirm")]
         [ValidateInput(false)]
         public ActionResult ConfirmOrder()
@@ -1262,7 +1303,6 @@ namespace Nop.Web.Controllers
             //If we got this far, something failed, redisplay form
             return View(model);
         }
-
 
         [ChildActionOnly]
         public ActionResult CheckoutProgress(CheckoutProgressStep step)
@@ -1552,7 +1592,7 @@ namespace Nop.Web.Controllers
                         _customerService.UpdateCustomer(_workContext.CurrentCustomer);
                         //reset selected shipping method (in case if "pick up in store" was selected)
                         _genericAttributeService.SaveAttribute<ShippingOption>(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedShippingOption, null, _storeContext.CurrentStore.Id);
-                        _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickUpInStore, false, _storeContext.CurrentStore.Id);
+                        _genericAttributeService.SaveAttribute<PickupPoint>(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickupPoint, null, _storeContext.CurrentStore.Id);
                         //limitation - "Ship to the same address" doesn't properly work in "pick up in store only" case (when no shipping plugins are available) 
                         return OpcLoadStepAfterShippingAddress(cart);
                     }
@@ -1560,11 +1600,6 @@ namespace Nop.Web.Controllers
                     {
                         //do not ship to the same address
                         var shippingAddressModel = PrepareShippingAddressModel(prePopulateNewAddressWithCustomerFields: true);
-                        if (_shippingSettings.AllowPickUpInStore && !_shippingService.LoadActiveShippingRateComputationMethods(_storeContext.CurrentStore.Id).Any())
-                        {
-                            shippingAddressModel.PickUpInStoreOnly = true;
-                            shippingAddressModel.PickUpInStore = true;
-                        }
 
                         return Json(new
                         {
@@ -1616,42 +1651,52 @@ namespace Nop.Web.Controllers
                 if (!cart.RequiresShipping())
                     throw new Exception("Shipping is not required");
 
-                //Pick up in store?
+                //pickup point
                 if (_shippingSettings.AllowPickUpInStore)
                 {
                     var model = new CheckoutShippingAddressModel();
                     TryUpdateModel(model);
 
-                    if (model.PickUpInStore)
+                    if (model.PickupInStore)
                     {
-                        //customer decided to pick up in store
-
                         //no shipping address selected
                         _workContext.CurrentCustomer.ShippingAddress = null;
                         _customerService.UpdateCustomer(_workContext.CurrentCustomer);
 
-                        //set value indicating that "pick up in store" option has been chosen
-                        _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickUpInStore, true, _storeContext.CurrentStore.Id);
-                        
-                        //save "pick up in store" shipping method
+                        PickupPoint selectedPoint;
+                        var selectedValue = form["pickup-points_id"];
+                        if (selectedValue != null)
+                        {
+                            var pickupPoint = selectedValue.Split(new[] { "___" }, StringSplitOptions.None);
+                            var pickupPoints = _shippingService
+                                .GetPickupPoints(_workContext.CurrentCustomer.BillingAddress, pickupPoint[1], _storeContext.CurrentStore.Id).PickupPoints.ToList();
+                            selectedPoint = pickupPoints.FirstOrDefault(x => x.Id.Equals(pickupPoint[0]));
+                            if (selectedPoint == null)
+                                throw new Exception("Pickup point is not allowed");
+                        }
+                        else
+                            selectedPoint = new PickupPoint
+                            {
+                                Name = _localizationService.GetResource("Checkout.PickupPoints.PickupInStore"),
+                                PickupFee = _shippingSettings.PickUpInStoreFee
+                            };
+
                         var pickUpInStoreShippingOption = new ShippingOption
                         {
-                            Name = _localizationService.GetResource("Checkout.PickUpInStore.MethodName"),
-                            Rate = _shippingSettings.PickUpInStoreFee,
-                            Description = null,
-                            ShippingRateComputationMethodSystemName = null
+                            Name = string.Format(_localizationService.GetResource("Checkout.PickupPoints.Name"), selectedPoint.Name),
+                            Rate = selectedPoint.PickupFee,
+                            Description = selectedPoint.Description,
+                            ShippingRateComputationMethodSystemName = selectedPoint.ProviderSystemName
                         };
-                        _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer,
-                            SystemCustomerAttributeNames.SelectedShippingOption,
-                            pickUpInStoreShippingOption,
-                            _storeContext.CurrentStore.Id);
+                        _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedShippingOption, pickUpInStoreShippingOption, _storeContext.CurrentStore.Id);
+                        _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickupPoint, selectedPoint, _storeContext.CurrentStore.Id);
 
                         //load next step
                         return OpcLoadStepAfterShippingMethod(cart);
                     }
 
                     //set value indicating that "pick up in store" option has not been chosen
-                    _genericAttributeService.SaveAttribute(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickUpInStore, false, _storeContext.CurrentStore.Id);
+                    _genericAttributeService.SaveAttribute<PickupPoint>(_workContext.CurrentCustomer, SystemCustomerAttributeNames.SelectedPickupPoint, null, _storeContext.CurrentStore.Id);
                 }
 
                 int shippingAddressId;

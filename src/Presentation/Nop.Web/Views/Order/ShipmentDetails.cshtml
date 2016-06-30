@@ -58,9 +58,28 @@
                     </li>
                 }
             </ul>
-            @if (!Model.Order.PickUpInStore)
-            {
-                <ul class="shipping-address">
+            <ul class="shipping-address">
+                @if (Model.Order.PickupInStore)
+                {
+                    <li class="title">
+                        @T("Order.Shipments.PickupAddress")
+                    </li>
+                    <li class="address1">
+                        @Model.Order.PickupAddress.Address1
+                    </li>
+                    <li class="city-state-zip">
+                        @Model.Order.PickupAddress.City, 
+                        @Model.Order.PickupAddress.ZipPostalCode
+                    </li>
+                    @if (!string.IsNullOrEmpty(Model.Order.PickupAddress.CountryName))
+                    {
+                        <li class="country">
+                            @Model.Order.PickupAddress.CountryName
+                        </li>
+                    }
+                }
+                else
+                {
                     <li class="title">
                         @T("Order.Shipments.ShippingAddress")
                     </li>
@@ -98,8 +117,8 @@
                             @Model.Order.ShippingAddress.CountryName
                         </li>
                     }
-                </ul>
-            }
+                }
+            </ul>
         </div>
         @if (Model.Items.Count > 0)
         {

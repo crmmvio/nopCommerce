@@ -97,8 +97,8 @@
                             </li>
                         }
                         @if (Model.BillingAddress.CityEnabled ||
-            Model.BillingAddress.StateProvinceEnabled ||
-            Model.BillingAddress.ZipPostalCodeEnabled)
+                            Model.BillingAddress.StateProvinceEnabled ||
+                            Model.BillingAddress.ZipPostalCodeEnabled)
                         {
                             <li class="city-state-zip">
                                 @if (Model.BillingAddress.CityEnabled)
@@ -205,16 +205,42 @@
             @if (Model.IsShippable)
             {
                 <div class="shipping-info-wrap">
-                    @if (!Model.PickUpInStore)
-                    {
-                        <div class="title">
-                            <strong>@T("Order.ShippingAddress")</strong>
-                        </div>
-                    }
+                    <div class="title">
+                        <strong>@(Model.PickupInStore ? T("Order.PickupAddress") : T("Order.ShippingAddress"))</strong>
+                    </div>
                     <div class="info-content">
-                        @if (!Model.PickUpInStore)
-                        {
-                            <ul class="shipping-info">
+                        <ul class="shipping-info">
+                            @if (Model.PickupInStore)
+                            {
+                                @if (!string.IsNullOrEmpty(Model.PickupAddress.Address1))
+                                {
+                                    <li class="address1">
+                                        @Model.PickupAddress.Address1
+                                    </li>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.PickupAddress.City) || !string.IsNullOrEmpty(Model.PickupAddress.ZipPostalCode))
+                                {
+                                    <li class="city-state-zip">
+                                        @if (!string.IsNullOrEmpty(Model.PickupAddress.City))
+                                        {
+                                            @Model.PickupAddress.City
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.PickupAddress.ZipPostalCode))
+                                        {
+                                            <text>,</text>
+                                            @Model.PickupAddress.ZipPostalCode
+                                        }
+                                    </li>
+                                }
+                                @if (!string.IsNullOrEmpty(Model.PickupAddress.CountryName))
+                                {
+                                    <li class="country">
+                                        @Model.PickupAddress.CountryName
+                                    </li>
+                                }
+                            }
+                            else
+                            {
                                 <li class="name">
                                     @Model.ShippingAddress.FirstName @Model.ShippingAddress.LastName
                                 </li>
@@ -252,8 +278,8 @@
                                     </li>
                                 }
                                 @if (Model.ShippingAddress.CityEnabled ||
-                                Model.ShippingAddress.StateProvinceEnabled ||
-                                Model.ShippingAddress.ZipPostalCodeEnabled)
+                                    Model.ShippingAddress.StateProvinceEnabled ||
+                                    Model.ShippingAddress.ZipPostalCodeEnabled)
                                 {
                                     <li class="city-state-zip">
                                         @if (Model.ShippingAddress.CityEnabled)
@@ -286,8 +312,8 @@
                                         @Html.Raw(Model.ShippingAddress.FormattedCustomAddressAttributes)
                                     </li>
                                 }
-                            </ul>
-                        }
+                            }
+                        </ul>
                         <div class="side-list-wrap">
                             <ul class="side-list">
                                 <li class="title">
@@ -301,7 +327,7 @@
                                         @Model.ShippingMethod
                                     </span>
                                 </li>
-                                @if (!Model.PrintMode && !Model.PickUpInStore)
+                                @if (!Model.PrintMode)
                                 {
                                     <li class="shipping-status">
                                         <span class="label">

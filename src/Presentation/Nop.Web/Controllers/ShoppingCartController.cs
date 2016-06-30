@@ -38,6 +38,7 @@ using Nop.Web.Framework.Mvc;
 using Nop.Web.Framework.Security;
 using Nop.Web.Framework.Security.Captcha;
 using Nop.Web.Infrastructure.Cache;
+using Nop.Web.Models.Common;
 using Nop.Web.Models.Media;
 using Nop.Web.Models.ShoppingCart;
 
@@ -608,26 +609,31 @@ namespace Nop.Web.Controllers
                 if (cart.RequiresShipping())
                 {
                     model.OrderReviewData.IsShippable = true;
-
-                    if (_shippingSettings.AllowPickUpInStore)
+                    var pickupPoint = _workContext.CurrentCustomer
+                        .GetAttribute<PickupPoint>(SystemCustomerAttributeNames.SelectedPickupPoint, _storeContext.CurrentStore.Id);
+                    model.OrderReviewData.PickupInStore = _shippingSettings.AllowPickUpInStore && pickupPoint != null;
+                    if (model.OrderReviewData.PickupInStore)
                     {
-                        model.OrderReviewData.SelectedPickUpInStore = _workContext.CurrentCustomer.GetAttribute<bool>(SystemCustomerAttributeNames.SelectedPickUpInStore, _storeContext.CurrentStore.Id);
+                        var country = _countryService.GetCountryByTwoLetterIsoCode(pickupPoint.CountryCode);
+                        model.OrderReviewData.PickupAddress = new AddressModel
+                        {
+                            Address1 = pickupPoint.Address,
+                            City = pickupPoint.City,
+                            CountryName = country != null ? country.Name : string.Empty,
+                            ZipPostalCode = pickupPoint.ZipPostalCode
+                        };
                     }
-
-                    if (!model.OrderReviewData.SelectedPickUpInStore)
+                    else
                     {
-                        var shippingAddress = _workContext.CurrentCustomer.ShippingAddress;
-                        if (shippingAddress != null)
+                        if (_workContext.CurrentCustomer.ShippingAddress != null)
                         {
                             model.OrderReviewData.ShippingAddress.PrepareModel(
-                                address: shippingAddress, 
+                                address: _workContext.CurrentCustomer.ShippingAddress,
                                 excludeProperties: false,
                                 addressSettings: _addressSettings,
                                 addressAttributeFormatter: _addressAttributeFormatter);
                         }
                     }
-                    
-                    
                     //selected shipping method
                     var shippingOption = _workContext.CurrentCustomer.GetAttribute<ShippingOption>(SystemCustomerAttributeNames.SelectedShippingOption, _storeContext.CurrentStore.Id);
                     if (shippingOption != null)
@@ -2422,12 +2428,7 @@ namespace Nop.Web.Controllers
                 };
                 GetShippingOptionResponse getShippingOptionResponse = _shippingService
                     .GetShippingOptions(cart, address, "", _storeContext.CurrentStore.Id);
-                if (!getShippingOptionResponse.Success)
-                {
-                    foreach (var error in getShippingOptionResponse.Errors)
-                        model.Warnings.Add(error);
-                }
-                else
+                if (getShippingOptionResponse.Success)
                 {
                     if (getShippingOptionResponse.ShippingOptions.Any())
                     {
@@ -2449,27 +2450,13 @@ namespace Nop.Web.Controllers
                             soModel.Price = _priceFormatter.FormatShippingPrice(rate, true);
                             model.ShippingOptions.Add(soModel);
                         }
-
-                        //pickup in store?
-                        if (_shippingSettings.AllowPickUpInStore)
-                        {
-                            var soModel = new EstimateShippingResultModel.ShippingOptionModel
-                            {
-                                Name = _localizationService.GetResource("Checkout.PickUpInStore"),
-                                Description = _localizationService.GetResource("Checkout.PickUpInStore.Description"),
-                            };
-                            decimal shippingTotal = _shippingSettings.PickUpInStoreFee;
-                            decimal rateBase = _taxService.GetShippingPrice(shippingTotal, _workContext.CurrentCustomer);
-                            decimal rate = _currencyService.ConvertFromPrimaryStoreCurrency(rateBase, _workContext.WorkingCurrency);
-                            soModel.Price = _priceFormatter.FormatShippingPrice(rate, true);
-                            model.ShippingOptions.Add(soModel);
-                        }
                     }
                     else
-                    {
                         model.Warnings.Add(_localizationService.GetResource("Checkout.ShippingIsNotAllowed"));
-                    }
                 }
+                else
+                    foreach (var error in getShippingOptionResponse.Errors)
+                        model.Warnings.Add(error);
             }
 
             return PartialView("_EstimateShippingResult", model);

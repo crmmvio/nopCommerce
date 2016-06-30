@@ -933,7 +933,6 @@ namespace Nop.Services.ExportImport
                     new PropertyByName<Order>("CustomerCurrencyCode", p=>p.CustomerCurrencyCode),
                     new PropertyByName<Order>("AffiliateId", p=>p.AffiliateId),
                     new PropertyByName<Order>("PaymentMethodSystemName", p=>p.PaymentMethodSystemName),
-                    new PropertyByName<Order>("ShippingPickUpInStore", p=>p.PickUpInStore),
                     new PropertyByName<Order>("ShippingMethod", p=>p.ShippingMethod),
                     new PropertyByName<Order>("ShippingRateComputationMethodSystemName", p=>p.ShippingRateComputationMethodSystemName),
                     new PropertyByName<Order>("CustomValuesXml", p=>p.CustomValuesXml),
@@ -962,7 +961,11 @@ namespace Nop.Services.ExportImport
                     new PropertyByName<Order>("ShippingAddress2", p=>p.ShippingAddress.Return(shippingAddress=>shippingAddress.Address2, "")),
                     new PropertyByName<Order>("ShippingZipPostalCode", p=>p.ShippingAddress.Return(shippingAddress=>shippingAddress.ZipPostalCode, "")),
                     new PropertyByName<Order>("ShippingPhoneNumber",p=>p.ShippingAddress.Return(shippingAddress=>shippingAddress.PhoneNumber, "")),
-                    new PropertyByName<Order>("ShippingFaxNumber", p=>p.ShippingAddress.Return(shippingAddress=>shippingAddress.FaxNumber, ""))
+                    new PropertyByName<Order>("ShippingFaxNumber", p=>p.ShippingAddress.Return(shippingAddress=>shippingAddress.FaxNumber, "")),
+                    new PropertyByName<Order>("PickupPointCountry", p=>p.PickupAddress.Return(pickupAddress=>pickupAddress.Country, null).Return(country=>country.Name,"")),
+                    new PropertyByName<Order>("PickupPointCity", p=>p.PickupAddress.Return(pickupAddress=>pickupAddress.City, "")),
+                    new PropertyByName<Order>("PickupPointAddress", p=>p.PickupAddress.Return(pickupAddress=>pickupAddress.Address1, "")),
+                    new PropertyByName<Order>("PickupPointZipPostalCode", p=>p.PickupAddress.Return(pickupAddress=>pickupAddress.ZipPostalCode, ""))
             };
 
             return ExportToXlsx(properties, orders);

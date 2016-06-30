@@ -1,24 +1,160 @@
 ﻿@model CheckoutShippingAddressModel
 @using Nop.Web.Models.Checkout;
 <div class="checkout-data">
-    @if (Model.AllowPickUpInStore)
-        {
-            <div class="section pickup-in-store">
-                <p class="selector">
-                    @{
-                        var pickupInStoreName = T("Checkout.PickUpInStore").Text;
-                        if (!String.IsNullOrEmpty(Model.PickUpInStoreFee))
-                        {
-                            pickupInStoreName = T("Checkout.PickUpInStoreAndFee", Model.PickUpInStoreFee).Text;
-                        }
-                    }
-                    @Html.CheckBoxFor(x => x.PickUpInStore, Model.PickUpInStoreOnly ? new { @onclick = "return false" } : new { @onclick = "Shipping.togglePickUpInStore(this)" })
-                    <label for="@Html.FieldIdFor(model => model.PickUpInStore)">@pickupInStoreName</label>
-                </p>
-                <p class="description"><i>@T("Checkout.PickUpInStore.Description")</i></p>
-            </div>
-        }
-    @if (!Model.PickUpInStoreOnly)
+    @if (Model.AllowPickupInStore && !Model.PickupInStoreOnly)
+    {
+        <div class="section pickup-points">
+            <p class="selector">
+                @Html.CheckBoxFor(x => x.PickupInStore, new { @onclick = "Shipping.togglePickUpInStore(this);resize()" })                
+                <label for="@Html.FieldIdFor(model => model.PickupInStore)">
+                    @T("Checkout.PickupPoints").Text
+                </label>
+            </p>
+            <p class="description">
+                <i>@T("Checkout.PickupPoints.Description")</i>
+            </p>
+            <script type="text/javascript">
+                $(document).ready(function () {
+                    Shipping.togglePickUpInStore($('#@Html.FieldIdFor(model => model.PickupInStore)'));
+                });
+            </script>
+        </div>
+    }
+    @if (Model.AllowPickupInStore)
+    {
+        <div class="pickup-points" id="pickup-points-form">
+            @if (Model.PickupPoints.Any())
+            {
+                if (Model.Warnings.Count == 0)
+                {
+                    <div class="section select-pickup-points">
+                        <label for="pickup-points-select">@T("Checkout.PickupPoints.SelectPickupPoint")</label>
+                        <div>
+                            <select name="pickup-points_id" id="pickup-points-select" class="address-select" title="" onchange="new google.maps.event.trigger(markers.get(this.value), 'click' )">
+                                @foreach (var point in Model.PickupPoints)
+                                {
+                                    var addressLine = new System.Text.StringBuilder();
+                                    addressLine.Append(point.Name);
+                                    if (!string.IsNullOrEmpty(point.Address))
+                                    {
+                                        addressLine.AppendFormat(", {0}", point.Address);
+                                    }
+                                    if (!string.IsNullOrEmpty(point.City))
+                                    {
+                                        addressLine.AppendFormat(", {0}", point.City);
+                                    }
+                                    if (!string.IsNullOrEmpty(point.CountryName))
+                                    {
+                                        addressLine.AppendFormat(", {0}", point.CountryName);
+                                    }
+                                    addressLine.AppendFormat(", {0}", point.PickupFee);
+                                    <option value="@(string.Format("{0}___{1}", point.Id, point.ProviderSystemName))">@(addressLine)</option>
+                                }
+                            </select>
+                            <div id="map" style="height: 800px; width:800px;"></div>
+                            <script type="text/javascript">
+                                var markers = new Map();
+                                var googleMap = null;
+                                $(document).ready(function () {
+                                    //google maps
+                                    $('#pickup-points-select').change(function() {
+                                        new google.maps.event.trigger(markers.get(this.value), 'click' );
+                                    });
+
+                                    google.maps.visualRefresh = true;
+                                    googleMap = new google.maps.Map(document.getElementById("map"), {
+                                        zoom: 15,
+                                        mapTypeId: google.maps.MapTypeId.ROADMAP
+                                    });
+                                    google.maps.event.trigger(googleMap, 'resize');
+                                    var geocoder = new google.maps.Geocoder();
+                                    var infowindow = new google.maps.InfoWindow();
+                                    @for (var i = 0; i < Model.PickupPoints.Count; i++)
+                                    {
+                                        var value = string.Format("{0}___{1}", Model.PickupPoints[i].Id, Model.PickupPoints[i].ProviderSystemName);
+                                        var pickupPointInfo = Html.Raw("<div class='pickup-point-info'>" + Model.PickupPoints[i].Name + "<br />" + Model.PickupPoints[i].OpeningHours + "<br />" + Model.PickupPoints[i].PickupFee);
+                                        if (Model.PickupPoints[i].Latitude != null && Model.PickupPoints[i].Longitude != null)
+                                        {
+                                            <text>
+                                                var marker = new google.maps.Marker({
+                                                    map: googleMap,
+                                                    title: "@Model.PickupPoints[i].Name",
+                                                    position: new google.maps.LatLng(@Model.PickupPoints[i].Latitude, @Model.PickupPoints[i].Longitude),
+                                                    icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                                                });
+                                                markers.set("@value", marker);
+                                                google.maps.event.addListener(marker, 'click', function () {
+                                                    $('#pickup-points-select').val("@value")
+                                                    infowindow.setContent("@pickupPointInfo");
+                                                    infowindow.open(googleMap, marker);
+                                                });
+                                                @if (i == 0)
+                                                {
+                                                    <text>googleMap.setCenter(marker.getPosition())</text>
+                                                }
+                                            </text>
+                                        }
+                                        else
+                                        {
+                                            var address = string.Format("{0} {1} {2} {3}", Model.PickupPoints[i].Address,
+                                                Model.PickupPoints[i].City, Model.PickupPoints[i].ZipPostalCode, Model.PickupPoints[i].CountryName);
+                                            <text>
+                                                geocoder.geocode({'address': "@address"}, function(results, status) {
+                                                    if (status === google.maps.GeocoderStatus.OK) {
+                                                        var marker = new google.maps.Marker({
+                                                            map: googleMap,
+                                                            title: "@Model.PickupPoints[i].Name",
+                                                            position: results[0].geometry.location,
+                                                            icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                                                        });
+                                                        markers.set("@value", marker);
+                                                        google.maps.event.addListener(marker, 'click', function () {
+                                                            $('#pickup-points-select').val("@value")
+                                                            infowindow.setContent("@pickupPointInfo");
+                                                            infowindow.open(googleMap, marker);
+                                                        });
+                                                        @if (i == 0)
+                                                        {
+                                                            <text>googleMap.setCenter(marker.getPosition())</text>
+                                                        }
+                                                    };
+                                                });
+                                            </text>
+                                        }
+                                    }
+                                });
+
+                                function resize() {
+                                    var center = googleMap.getCenter();
+                                    google.maps.event.trigger(googleMap, 'resize');
+                                    googleMap.setCenter(center);
+                                };
+                            </script>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="message-error">
+                        <ul>
+                            @foreach (var warning in Model.Warnings)
+                            {
+                                <li>@warning</li>
+                            }
+                        </ul>
+                    </div>
+                }
+            }
+            else
+            {
+                @Html.HiddenFor(x => x.PickupInStore);
+                <div class="pickup-in-store">
+                    @T("Checkout.PickupPoints.PickupInStore.Address")
+                </div>
+            }
+        </div>
+    }
+    @if (!Model.PickupInStoreOnly)
     {
         <div class="shipping-addresses" id="shipping-addresses-form">
             @Html.Widget("op_checkout_shipping_address_top")

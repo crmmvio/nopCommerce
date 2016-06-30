@@ -3521,11 +3521,11 @@ label, label + * {
 	color: #444;
 }
 
-.checkout-page .pickup-in-store {
+.checkout-page .pickup-points {
 	padding: 30px 0;
 	text-align: center;
 }
-.checkout-page .pickup-in-store .selector {
+.checkout-page .pickup-points .selector {
 	margin: 0 0 5px;
 	font-weight: bold;
 	color: #444;
@@ -3742,7 +3742,7 @@ label, label + * {
 	margin: 0 0 30px;
 	padding: 0;
 }
-.opc .section.pickup-in-store {
+.opc .section.pickup-points {
 	margin: 0 0 30px;
 	padding: 0;
 }

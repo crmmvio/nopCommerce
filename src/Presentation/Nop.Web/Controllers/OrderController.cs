@@ -189,8 +189,16 @@ namespace Nop.Web.Controllers
             if (order.ShippingStatus != ShippingStatus.ShippingNotRequired)
             {
                 model.IsShippable = true;
-                model.PickUpInStore = order.PickUpInStore;
-                if (!order.PickUpInStore)
+                model.PickupInStore = order.PickupAddress != null;
+                if (model.PickupInStore)
+                    model.PickupAddress = new AddressModel
+                    {
+                        Address1 = order.PickupAddress.Address1,
+                        City = order.PickupAddress.City,
+                        CountryName = order.PickupAddress.Country != null ? order.PickupAddress.Country.Name : string.Empty,
+                        ZipPostalCode = order.PickupAddress.ZipPostalCode
+                    };
+                else
                 {
                     model.ShippingAddress.PrepareModel(
                         address: order.ShippingAddress,

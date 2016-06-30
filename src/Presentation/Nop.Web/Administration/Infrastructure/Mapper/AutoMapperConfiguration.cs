@@ -400,6 +400,17 @@ namespace Nop.Admin.Infrastructure.Mapper
                     .ForMember(dest => dest.ConfigurationControllerName, mo => mo.Ignore())
                     .ForMember(dest => dest.ConfigurationRouteValues, mo => mo.Ignore())
                     .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
+                //pickup point providers
+                cfg.CreateMap<IPickupPointProvider, PickupPointProviderModel>()
+                    .ForMember(dest => dest.FriendlyName, mo => mo.MapFrom(src => src.PluginDescriptor.FriendlyName))
+                    .ForMember(dest => dest.SystemName, mo => mo.MapFrom(src => src.PluginDescriptor.SystemName))
+                    .ForMember(dest => dest.DisplayOrder, mo => mo.MapFrom(src => src.PluginDescriptor.DisplayOrder))
+                    .ForMember(dest => dest.IsActive, mo => mo.Ignore())
+                    .ForMember(dest => dest.LogoUrl, mo => mo.Ignore())
+                    .ForMember(dest => dest.ConfigurationActionName, mo => mo.Ignore())
+                    .ForMember(dest => dest.ConfigurationControllerName, mo => mo.Ignore())
+                    .ForMember(dest => dest.ConfigurationRouteValues, mo => mo.Ignore())
+                    .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
                 //payment methods
                 cfg.CreateMap<IPaymentMethod, PaymentMethodModel>()
                     .ForMember(dest => dest.FriendlyName, mo => mo.MapFrom(src => src.PluginDescriptor.FriendlyName))
@@ -742,6 +753,7 @@ namespace Nop.Admin.Infrastructure.Mapper
                     .ForMember(dest => dest.CustomProperties, mo => mo.Ignore());
                 cfg.CreateMap<ShippingSettingsModel, ShippingSettings>()
                     .ForMember(dest => dest.ActiveShippingRateComputationMethodSystemNames, mo => mo.Ignore())
+                    .ForMember(dest => dest.ActivePickupPointProviderSystemNames, mo => mo.Ignore())
                     .ForMember(dest => dest.ReturnValidOptionsIfThereAreAny, mo => mo.Ignore())
                     .ForMember(dest => dest.UseCubeRootMethod, mo => mo.Ignore());
                 cfg.CreateMap<CatalogSettings, CatalogSettingsModel>()
