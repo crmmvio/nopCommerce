@@ -22,6 +22,7 @@ namespace Nop.Web.Models.Checkout
 
         public IList<CheckoutPickupPointModel> PickupPoints { get; set; }
         public bool AllowPickupInStore { get; set; }
+        public string PickupInStoreFee { get; set; }
         public bool PickupInStore { get; set; }
         public bool PickupInStoreOnly { get; set; }
     }

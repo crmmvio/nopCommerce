@@ -251,16 +251,27 @@ namespace Nop.Web.Controllers
                         foreach (var error in pickupPointsResponse.Errors)
                             model.Warnings.Add(error);
                 }
+                else
+                {
+                    if (_shippingSettings.PickUpInStoreFee > 0)
+                    {
+                        var amount = _taxService.GetShippingPrice(_shippingSettings.PickUpInStoreFee, _workContext.CurrentCustomer);
+                        amount = _currencyService.ConvertFromPrimaryStoreCurrency(amount, _workContext.WorkingCurrency);
+                        model.PickupInStoreFee = _priceFormatter.FormatShippingPrice(amount, true);
+                    }
+                    else
+                        model.PickupInStoreFee = _localizationService.GetResource("Checkout.PickupPoints.FreeShipping");
+                }
 
                 //only available pickup points
-                if ( _shippingService.LoadActiveShippingRateComputationMethods(_storeContext.CurrentStore.Id).Count == 0)
+                if (_shippingService.LoadActiveShippingRateComputationMethods(_storeContext.CurrentStore.Id).Count == 0)
                 {
                     model.PickupInStoreOnly = true;
                     model.PickupInStore = true;
                     return model;
                 }
             }
-
+            
             //existing addresses
             var addresses = _workContext.CurrentCustomer.Addresses
                 .Where(a => a.Country == null || 

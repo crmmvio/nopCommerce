@@ -72,6 +72,7 @@ namespace Nop.Data.Tests.Orders
                 PickupAddress = GetTestPickupAddress(),
                 ShippingMethod = "ShippingMethod1",
                 ShippingRateComputationMethodSystemName = "ShippingRateComputationMethodSystemName1",
+                PickUpInStore = true,
                 CustomValuesXml = "CustomValuesXml1",
                 Deleted = false,
                 CreatedOnUtc = new DateTime(2010, 01, 04)
@@ -129,6 +130,7 @@ namespace Nop.Data.Tests.Orders
             fromDb.PickupAddress.LastName.ShouldEqual("LastName 3");
             fromDb.ShippingMethod.ShouldEqual("ShippingMethod1");
             fromDb.ShippingRateComputationMethodSystemName.ShouldEqual("ShippingRateComputationMethodSystemName1");
+            fromDb.PickUpInStore.ShouldEqual(true);
             fromDb.CustomValuesXml.ShouldEqual("CustomValuesXml1");
             fromDb.Deleted.ShouldEqual(false);
             fromDb.CreatedOnUtc.ShouldEqual(new DateTime(2010, 01, 04));

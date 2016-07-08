@@ -3720,13 +3720,6 @@ GO
  END
  GO
 
- --drop column
-IF EXISTS (SELECT 1 FROM sys.columns WHERE object_id=object_id('[Order]') and NAME='PickUpInStore')
-BEGIN
-	ALTER TABLE [Order] DROP COLUMN [PickUpInStore]
-END
-GO
-
  --new column
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=object_id('[Order]') and NAME='PickupAddressId')
 BEGIN

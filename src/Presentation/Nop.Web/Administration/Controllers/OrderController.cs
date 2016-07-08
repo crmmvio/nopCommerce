@@ -696,13 +696,16 @@ namespace Nop.Admin.Controllers
             if (order.ShippingStatus != ShippingStatus.ShippingNotRequired)
             {
                 model.IsShippable = true;
-                model.PickupInStore = order.PickupAddress != null;
+                model.PickupInStore = order.PickUpInStore || order.PickupAddress != null;
                 if (model.PickupInStore)
                 {
-                    model.PickupAddress = order.PickupAddress.ToModel();
-                    model.PickupAddressGoogleMapsUrl = string.Format("http://maps.google.com/maps?f=q&hl=en&ie=UTF8&oe=UTF8&geocode=&q={0}",
-                        Server.UrlEncode(string.Format("{0} {1} {2} {3}", order.PickupAddress.Address1, order.PickupAddress.ZipPostalCode, order.PickupAddress.City,
-                            order.PickupAddress.Country != null ? order.PickupAddress.Country.Name : string.Empty)));
+                    if (order.PickupAddress != null)
+                    {
+                        model.PickupAddress = order.PickupAddress.ToModel();
+                        model.PickupAddressGoogleMapsUrl = string.Format("http://maps.google.com/maps?f=q&hl=en&ie=UTF8&oe=UTF8&geocode=&q={0}",
+                            Server.UrlEncode(string.Format("{0} {1} {2} {3}", order.PickupAddress.Address1, order.PickupAddress.ZipPostalCode, order.PickupAddress.City,
+                                order.PickupAddress.Country != null ? order.PickupAddress.Country.Name : string.Empty)));
+                    }
                 }
                 else
                 {

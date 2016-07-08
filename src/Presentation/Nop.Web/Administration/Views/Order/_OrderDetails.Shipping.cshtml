@@ -3,7 +3,7 @@
 <div class="panel-group">
     @if (Model.IsShippable)
     {
-        if (Model.PickupInStore)
+        if (Model.PickupInStore && Model.PickupAddress != null)
         {
             <div class="panel panel-default">
                 <div class="panel-body">

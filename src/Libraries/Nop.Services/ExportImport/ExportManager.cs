@@ -933,6 +933,7 @@ namespace Nop.Services.ExportImport
                     new PropertyByName<Order>("CustomerCurrencyCode", p=>p.CustomerCurrencyCode),
                     new PropertyByName<Order>("AffiliateId", p=>p.AffiliateId),
                     new PropertyByName<Order>("PaymentMethodSystemName", p=>p.PaymentMethodSystemName),
+                    new PropertyByName<Order>("ShippingPickUpInStore", p=>p.PickUpInStore),
                     new PropertyByName<Order>("ShippingMethod", p=>p.ShippingMethod),
                     new PropertyByName<Order>("ShippingRateComputationMethodSystemName", p=>p.ShippingRateComputationMethodSystemName),
                     new PropertyByName<Order>("CustomValuesXml", p=>p.CustomValuesXml),

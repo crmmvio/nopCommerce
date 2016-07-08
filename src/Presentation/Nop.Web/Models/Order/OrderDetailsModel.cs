@@ -17,6 +17,7 @@ namespace Nop.Web.Models.Order
 
             BillingAddress = new AddressModel();
             ShippingAddress = new AddressModel();
+            PickupAddress = new AddressModel();
 
             CustomValues = new Dictionary<string, object>();
         }
