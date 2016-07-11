@@ -206,40 +206,11 @@
             {
                 <div class="shipping-info-wrap">
                     <div class="title">
-                        <strong>@(Model.PickupInStore ? T("Order.PickupAddress") : T("Order.ShippingAddress"))</strong>
+                        <strong>@(Model.PickUpInStore ? T("Order.PickupAddress") : T("Order.ShippingAddress"))</strong>
                     </div>
                     <div class="info-content">
                         <ul class="shipping-info">
-                            @if (Model.PickupInStore)
-                            {
-                                if (!string.IsNullOrEmpty(Model.PickupAddress.Address1))
-                                {
-                                    <li class="address1">
-                                        @Model.PickupAddress.Address1
-                                    </li>
-                                }
-                                if (!string.IsNullOrEmpty(Model.PickupAddress.City) || !string.IsNullOrEmpty(Model.PickupAddress.ZipPostalCode))
-                                {
-                                    <li class="city-state-zip">
-                                        @if (!string.IsNullOrEmpty(Model.PickupAddress.City))
-                                        {
-                                            @Model.PickupAddress.City
-                                        }
-                                        @if (!string.IsNullOrEmpty(Model.PickupAddress.ZipPostalCode))
-                                        {
-                                            <text>,</text>
-                                            @Model.PickupAddress.ZipPostalCode
-                                        }
-                                    </li>
-                                }
-                                if (!string.IsNullOrEmpty(Model.PickupAddress.CountryName))
-                                {
-                                    <li class="country">
-                                        @Model.PickupAddress.CountryName
-                                    </li>
-                                }
-                            }
-                            else
+                            @if (!Model.PickUpInStore)
                             {
                                 <li class="name">
                                     @Model.ShippingAddress.FirstName @Model.ShippingAddress.LastName
@@ -310,6 +281,35 @@
                                 {
                                     <li class="custom-attributes-view">
                                         @Html.Raw(Model.ShippingAddress.FormattedCustomAddressAttributes)
+                                    </li>
+                                }
+                            }
+                            else
+                            {
+                                if (!string.IsNullOrEmpty(Model.PickupAddress.Address1))
+                                {
+                                    <li class="address1">
+                                        @Model.PickupAddress.Address1
+                                    </li>
+                                }
+                                if (!string.IsNullOrEmpty(Model.PickupAddress.City) || !string.IsNullOrEmpty(Model.PickupAddress.ZipPostalCode))
+                                {
+                                    <li class="city-state-zip">
+                                        @if (!string.IsNullOrEmpty(Model.PickupAddress.City))
+                                        {
+                                            @Model.PickupAddress.City
+                                        }
+                                        @if (!string.IsNullOrEmpty(Model.PickupAddress.ZipPostalCode))
+                                        {
+                                            <text>,</text>
+                                            @Model.PickupAddress.ZipPostalCode
+                                        }
+                                    </li>
+                                }
+                                if (!string.IsNullOrEmpty(Model.PickupAddress.CountryName))
+                                {
+                                    <li class="country">
+                                        @Model.PickupAddress.CountryName
                                     </li>
                                 }
                             }

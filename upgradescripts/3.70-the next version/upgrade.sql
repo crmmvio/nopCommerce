@@ -1025,13 +1025,16 @@ set @resources='
   <LocaleResource Name="Admin.Catalog.Products.Fields.StockQuantity.ChangedWarning">
     <Value>Quantity has been changed while you were editing the product. Changes haven''t been saved. Please ensure that everything is correct and click "Save" button one more time.</Value>
   </LocaleResource>
-  <LocaleResource Name="Checkout.PickUpInStore">
+  <LocaleResource Name="Admin.Configuration.Settings.Shipping.DisplayPickupPointsOnMap">
+    <Value>Display pickup points on the map</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Settings.Shipping.DisplayPickupPointsOnMap.Hint">
+    <Value>Check to display pickup points on the map.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Settings.Shipping.PickUpInStoreFee">
     <Value></Value>
   </LocaleResource>
-  <LocaleResource Name="Checkout.PickUpInStore.Description">
-    <Value></Value>
-  </LocaleResource>
-  <LocaleResource Name="Checkout.PickUpInStore.MethodName">
+  <LocaleResource Name="Admin.Configuration.Settings.Shipping.PickUpInStoreFee.Hint">
     <Value></Value>
   </LocaleResource>
   <LocaleResource Name="Admin.Configuration.Shipping.PickupPointProviders">
@@ -1070,6 +1073,18 @@ set @resources='
   <LocaleResource Name="Admin.Orders.Fields.PickupAddress.ViewOnGoogleMaps">
     <Value>View address on Google Maps</Value>
   </LocaleResource>
+  <LocaleResource Name="Checkout.PickUpInStore">
+    <Value></Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickUpInStoreAndFee">
+    <Value></Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickUpInStore.Description">
+    <Value></Value>
+  </LocaleResource>
+  <LocaleResource Name="Checkout.PickUpInStore.MethodName">
+    <Value></Value>
+  </LocaleResource>
   <LocaleResource Name="Checkout.PickupPoints">
     <Value>Pickup</Value>
   </LocaleResource>
@@ -1082,11 +1097,8 @@ set @resources='
   <LocaleResource Name="Checkout.PickupPoints.Name">
     <Value>Pickup at {0}</Value>
   </LocaleResource>
-  <LocaleResource Name="Checkout.PickupPoints.PickupInStore">
-    <Value>store</Value>
-  </LocaleResource>
-  <LocaleResource Name="Checkout.PickupPoints.PickupInStore.Address">
-    <Value>Pick up your items at the store (put your store address here)</Value>
+  <LocaleResource Name="Checkout.PickupPoints.NotAvailable">
+    <Value>Pickup points could not be loaded</Value>
   </LocaleResource>
   <LocaleResource Name="Checkout.PickupPoints.SelectPickupPoint">
     <Value>Select pickup point</Value>
@@ -3712,13 +3724,26 @@ BEGIN
 END
 GO
 
+--delete setting
+DELETE FROM [Setting]
+WHERE [name] = N'shippingsettings.pickupinstorefee'
+GO
+
 --new setting
- IF NOT EXISTS (SELECT 1 FROM [Setting] WHERE [name] = N'shippingsettings.activepickuppointprovidersystemnames')
- BEGIN
- 	INSERT [Setting] ([Name], [Value], [StoreId])
- 	VALUES (N'shippingsettings.activepickuppointprovidersystemnames', N'', 0)
- END
- GO
+IF NOT EXISTS (SELECT 1 FROM [Setting] WHERE [name] = N'shippingsettings.displaypickuppointsonmap')
+BEGIN
+	INSERT [Setting] ([Name], [Value], [StoreId])
+	VALUES (N'shippingsettings.displaypickuppointsonmap', N'true', 0)
+END
+GO
+
+--new setting
+IF NOT EXISTS (SELECT 1 FROM [Setting] WHERE [name] = N'shippingsettings.activepickuppointprovidersystemnames')
+BEGIN
+	INSERT [Setting] ([Name], [Value], [StoreId])
+	VALUES (N'shippingsettings.activepickuppointprovidersystemnames', N'', 0)
+END
+GO
 
  --new column
 IF NOT EXISTS (SELECT 1 FROM sys.columns WHERE object_id=object_id('[Order]') and NAME='PickupAddressId')
@@ -3735,6 +3760,6 @@ BEGIN
 END
 GO
 
- ALTER TABLE [dbo].[Order] WITH CHECK ADD CONSTRAINT [Order_PickupAddress] FOREIGN KEY([PickupAddressId])
+ALTER TABLE [dbo].[Order] WITH CHECK ADD CONSTRAINT [Order_PickupAddress] FOREIGN KEY([PickupAddressId])
 REFERENCES [dbo].[Address] ([Id])
 GO

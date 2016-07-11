@@ -15,11 +15,11 @@ namespace Nop.Admin.Models.Settings
         [NopResourceDisplayName("Admin.Configuration.Settings.Shipping.AllowPickUpInStore")]
         public bool AllowPickUpInStore { get; set; }
         public bool AllowPickUpInStore_OverrideForStore { get; set; }
-        
-        [NopResourceDisplayName("Admin.Configuration.Settings.Shipping.PickUpInStoreFee")]
-        public decimal PickUpInStoreFee { get; set; }
-        public bool PickUpInStoreFee_OverrideForStore { get; set; }
-    
+
+        [NopResourceDisplayName("Admin.Configuration.Settings.Shipping.DisplayPickupPointsOnMap")]
+        public bool DisplayPickupPointsOnMap { get; set; }
+        public bool DisplayPickupPointsOnMap_OverrideForStore { get; set; }
+
         [NopResourceDisplayName("Admin.Configuration.Settings.Shipping.UseWarehouseLocation")]
         public bool UseWarehouseLocation { get; set; }
         public bool UseWarehouseLocation_OverrideForStore { get; set; }

@@ -696,18 +696,9 @@ namespace Nop.Admin.Controllers
             if (order.ShippingStatus != ShippingStatus.ShippingNotRequired)
             {
                 model.IsShippable = true;
-                model.PickupInStore = order.PickUpInStore || order.PickupAddress != null;
-                if (model.PickupInStore)
-                {
-                    if (order.PickupAddress != null)
-                    {
-                        model.PickupAddress = order.PickupAddress.ToModel();
-                        model.PickupAddressGoogleMapsUrl = string.Format("http://maps.google.com/maps?f=q&hl=en&ie=UTF8&oe=UTF8&geocode=&q={0}",
-                            Server.UrlEncode(string.Format("{0} {1} {2} {3}", order.PickupAddress.Address1, order.PickupAddress.ZipPostalCode, order.PickupAddress.City,
-                                order.PickupAddress.Country != null ? order.PickupAddress.Country.Name : string.Empty)));
-                    }
-                }
-                else
+
+                model.PickUpInStore = order.PickUpInStore;
+                if (!order.PickUpInStore)
                 {
                     model.ShippingAddress = order.ShippingAddress.ToModel();
                     model.ShippingAddress.FormattedCustomAddressAttributes = _addressAttributeFormatter.FormatAttributes(order.ShippingAddress.CustomAttributes);
@@ -733,8 +724,18 @@ namespace Nop.Admin.Controllers
                     model.ShippingAddress.PhoneRequired = _addressSettings.PhoneRequired;
                     model.ShippingAddress.FaxEnabled = _addressSettings.FaxEnabled;
                     model.ShippingAddress.FaxRequired = _addressSettings.FaxRequired;
-                    
+
                     model.ShippingAddressGoogleMapsUrl = string.Format("http://maps.google.com/maps?f=q&hl=en&ie=UTF8&oe=UTF8&geocode=&q={0}", Server.UrlEncode(order.ShippingAddress.Address1 + " " + order.ShippingAddress.ZipPostalCode + " " + order.ShippingAddress.City + " " + (order.ShippingAddress.Country != null ? order.ShippingAddress.Country.Name : "")));
+                }
+                else
+                {
+                    if (order.PickupAddress != null)
+                    {
+                        model.PickupAddress = order.PickupAddress.ToModel();
+                        model.PickupAddressGoogleMapsUrl = string.Format("http://maps.google.com/maps?f=q&hl=en&ie=UTF8&oe=UTF8&geocode=&q={0}",
+                            Server.UrlEncode(string.Format("{0} {1} {2} {3}", order.PickupAddress.Address1, order.PickupAddress.ZipPostalCode, order.PickupAddress.City,
+                                order.PickupAddress.Country != null ? order.PickupAddress.Country.Name : string.Empty)));
+                    }
                 }
                 model.ShippingMethod = order.ShippingMethod;
 

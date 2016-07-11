@@ -609,21 +609,11 @@ namespace Nop.Web.Controllers
                 if (cart.RequiresShipping())
                 {
                     model.OrderReviewData.IsShippable = true;
+
                     var pickupPoint = _workContext.CurrentCustomer
                         .GetAttribute<PickupPoint>(SystemCustomerAttributeNames.SelectedPickupPoint, _storeContext.CurrentStore.Id);
-                    model.OrderReviewData.PickupInStore = _shippingSettings.AllowPickUpInStore && pickupPoint != null;
-                    if (model.OrderReviewData.PickupInStore)
-                    {
-                        var country = _countryService.GetCountryByTwoLetterIsoCode(pickupPoint.CountryCode);
-                        model.OrderReviewData.PickupAddress = new AddressModel
-                        {
-                            Address1 = pickupPoint.Address,
-                            City = pickupPoint.City,
-                            CountryName = country != null ? country.Name : string.Empty,
-                            ZipPostalCode = pickupPoint.ZipPostalCode
-                        };
-                    }
-                    else
+                    model.OrderReviewData.SelectedPickUpInStore = _shippingSettings.AllowPickUpInStore && pickupPoint != null;
+                    if (!model.OrderReviewData.SelectedPickUpInStore)
                     {
                         if (_workContext.CurrentCustomer.ShippingAddress != null)
                         {
@@ -634,6 +624,18 @@ namespace Nop.Web.Controllers
                                 addressAttributeFormatter: _addressAttributeFormatter);
                         }
                     }
+                    else
+                    {
+                        var country = _countryService.GetCountryByTwoLetterIsoCode(pickupPoint.CountryCode);
+                        model.OrderReviewData.PickupAddress = new AddressModel
+                        {
+                            Address1 = pickupPoint.Address,
+                            City = pickupPoint.City,
+                            CountryName = country != null ? country.Name : string.Empty,
+                            ZipPostalCode = pickupPoint.ZipPostalCode
+                        };
+                    }
+
                     //selected shipping method
                     var shippingOption = _workContext.CurrentCustomer.GetAttribute<ShippingOption>(SystemCustomerAttributeNames.SelectedShippingOption, _storeContext.CurrentStore.Id);
                     if (shippingOption != null)

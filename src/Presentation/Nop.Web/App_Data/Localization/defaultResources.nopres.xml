@@ -6441,6 +6441,12 @@
   <LocaleResource Name="Admin.Configuration.Settings.Shipping.BypassShippingMethodSelectionIfOnlyOne.Hint">
     <Value>Check to bypass a shipping method page during checkout if there's only one shipping method available.</Value>
   </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Settings.Shipping.DisplayPickupPointsOnMap">
+    <Value>Display pickup points on the map</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Settings.Shipping.DisplayPickupPointsOnMap.Hint">
+    <Value>Check to display pickup points on the map.</Value>
+  </LocaleResource>
   <LocaleResource Name="Admin.Configuration.Settings.Shipping.DisplayShipmentEventsToCustomers">
     <Value>Display shipment events (customers)</Value>
   </LocaleResource>
@@ -6482,12 +6488,6 @@
   </LocaleResource>
   <LocaleResource Name="Admin.Configuration.Settings.Shipping.NotifyCustomerAboutShippingFromMultipleLocations.Hint">
     <Value>Check if you want customers to be notified when shipping from multiple locations.</Value>
-  </LocaleResource>
-  <LocaleResource Name="Admin.Configuration.Settings.Shipping.PickUpInStoreFee">
-    <Value>"Pick Up in Store" fee</Value>
-  </LocaleResource>
-  <LocaleResource Name="Admin.Configuration.Settings.Shipping.PickUpInStoreFee.Hint">
-    <Value>Specify "Pick Up in Store" fee.</Value>
   </LocaleResource>
   <LocaleResource Name="Admin.Configuration.Settings.Shipping.ShipToSameAddress">
     <Value>Ship to the same address</Value>
@@ -11928,11 +11928,8 @@
   <LocaleResource Name="Checkout.PickupPoints.Name">
     <Value>Pickup at {0}</Value>
   </LocaleResource>
-  <LocaleResource Name="Checkout.PickupPoints.PickupInStore">
-    <Value>store</Value>
-  </LocaleResource>
-  <LocaleResource Name="Checkout.PickupPoints.PickupInStore.Address">
-    <Value>Pick up your items at the store (put your store address here)</Value>
+  <LocaleResource Name="Checkout.PickupPoints.NotAvailable">
+    <Value>Pickup points could not be loaded</Value>
   </LocaleResource>
   <LocaleResource Name="Checkout.PickupPoints.SelectPickupPoint">
     <Value>Select pickup point</Value>

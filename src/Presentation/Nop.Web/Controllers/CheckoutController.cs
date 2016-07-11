@@ -210,14 +210,15 @@ namespace Nop.Web.Controllers
             var model = new CheckoutShippingAddressModel();
 
             //allow pickup in store?
-            model.AllowPickupInStore = _shippingSettings.AllowPickUpInStore;
-            if (model.AllowPickupInStore)
+            model.AllowPickUpInStore = _shippingSettings.AllowPickUpInStore;
+            if (model.AllowPickUpInStore)
             {
-                if (_shippingService.LoadActivePickupPointProviders(_storeContext.CurrentStore.Id).Any())
+                model.DisplayPickupPointsOnMap = _shippingSettings.DisplayPickupPointsOnMap;
+                var pickupPointProviders = _shippingService.LoadActivePickupPointProviders(_storeContext.CurrentStore.Id);
+                if (pickupPointProviders.Any())
                 {
                     var pickupPointsResponse = _shippingService.GetPickupPoints(_workContext.CurrentCustomer.BillingAddress, null, _storeContext.CurrentStore.Id);
                     if (pickupPointsResponse.Success)
-                    {
                         model.PickupPoints = pickupPointsResponse.PickupPoints.Select(x =>
                         {
                             var country = _countryService.GetCountryByTwoLetterIsoCode(x.CountryCode);
@@ -246,28 +247,18 @@ namespace Nop.Web.Controllers
 
                             return pickupPointModel;
                         }).ToList();
-                    }
                     else
                         foreach (var error in pickupPointsResponse.Errors)
                             model.Warnings.Add(error);
                 }
-                else
-                {
-                    if (_shippingSettings.PickUpInStoreFee > 0)
-                    {
-                        var amount = _taxService.GetShippingPrice(_shippingSettings.PickUpInStoreFee, _workContext.CurrentCustomer);
-                        amount = _currencyService.ConvertFromPrimaryStoreCurrency(amount, _workContext.WorkingCurrency);
-                        model.PickupInStoreFee = _priceFormatter.FormatShippingPrice(amount, true);
-                    }
-                    else
-                        model.PickupInStoreFee = _localizationService.GetResource("Checkout.PickupPoints.FreeShipping");
-                }
 
                 //only available pickup points
-                if (_shippingService.LoadActiveShippingRateComputationMethods(_storeContext.CurrentStore.Id).Count == 0)
+                if (!_shippingService.LoadActiveShippingRateComputationMethods(_storeContext.CurrentStore.Id).Any())
                 {
-                    model.PickupInStoreOnly = true;
-                    model.PickupInStore = true;
+                    if (!pickupPointProviders.Any())
+                        model.Warnings.Add(_localizationService.GetResource("Checkout.PickupPoints.NotAvailable"));
+                    model.PickUpInStoreOnly = true;
+                    model.PickUpInStore = true;
                     return model;
                 }
             }
@@ -820,29 +811,18 @@ namespace Nop.Web.Controllers
             //pickup point
             if (_shippingSettings.AllowPickUpInStore)
             {
-                if (model.PickupInStore)
+                if (model.PickUpInStore)
                 {
                     //no shipping address selected
                     _workContext.CurrentCustomer.ShippingAddress = null;
                     _customerService.UpdateCustomer(_workContext.CurrentCustomer);
 
-                    PickupPoint selectedPoint;
-                    var selectedValue = form["pickup-points_id"];
-                    if (selectedValue != null)
-                    {
-                        var pickupPoint = selectedValue.Split(new[] { "___" }, StringSplitOptions.None);
-                        var pickupPoints = _shippingService
-                            .GetPickupPoints(_workContext.CurrentCustomer.BillingAddress, pickupPoint[1], _storeContext.CurrentStore.Id).PickupPoints.ToList();
-                        selectedPoint = pickupPoints.FirstOrDefault(x => x.Id.Equals(pickupPoint[0]));
-                        if (selectedPoint == null)
-                            return RedirectToRoute("CheckoutShippingAddress");
-                    }
-                    else
-                        selectedPoint = new PickupPoint
-                        {
-                            Name = _localizationService.GetResource("Checkout.PickupPoints.PickupInStore"),
-                            PickupFee = _shippingSettings.PickUpInStoreFee
-                        };
+                    var pickupPoint = form["pickup-points-id"].Split(new[] { "___" }, StringSplitOptions.None);
+                    var pickupPoints = _shippingService
+                        .GetPickupPoints(_workContext.CurrentCustomer.BillingAddress, pickupPoint[1], _storeContext.CurrentStore.Id).PickupPoints.ToList();
+                    var selectedPoint = pickupPoints.FirstOrDefault(x => x.Id.Equals(pickupPoint[0]));
+                    if (selectedPoint == null)
+                        return RedirectToRoute("CheckoutShippingAddress");
 
                     var pickUpInStoreShippingOption = new ShippingOption
                     {
@@ -1668,29 +1648,18 @@ namespace Nop.Web.Controllers
                     var model = new CheckoutShippingAddressModel();
                     TryUpdateModel(model);
 
-                    if (model.PickupInStore)
+                    if (model.PickUpInStore)
                     {
                         //no shipping address selected
                         _workContext.CurrentCustomer.ShippingAddress = null;
                         _customerService.UpdateCustomer(_workContext.CurrentCustomer);
 
-                        PickupPoint selectedPoint;
-                        var selectedValue = form["pickup-points_id"];
-                        if (selectedValue != null)
-                        {
-                            var pickupPoint = selectedValue.Split(new[] { "___" }, StringSplitOptions.None);
-                            var pickupPoints = _shippingService
-                                .GetPickupPoints(_workContext.CurrentCustomer.BillingAddress, pickupPoint[1], _storeContext.CurrentStore.Id).PickupPoints.ToList();
-                            selectedPoint = pickupPoints.FirstOrDefault(x => x.Id.Equals(pickupPoint[0]));
-                            if (selectedPoint == null)
-                                throw new Exception("Pickup point is not allowed");
-                        }
-                        else
-                            selectedPoint = new PickupPoint
-                            {
-                                Name = _localizationService.GetResource("Checkout.PickupPoints.PickupInStore"),
-                                PickupFee = _shippingSettings.PickUpInStoreFee
-                            };
+                        var pickupPoint = form["pickup-points-id"].Split(new[] { "___" }, StringSplitOptions.None);
+                        var pickupPoints = _shippingService
+                            .GetPickupPoints(_workContext.CurrentCustomer.BillingAddress, pickupPoint[1], _storeContext.CurrentStore.Id).PickupPoints.ToList();
+                        var selectedPoint = pickupPoints.FirstOrDefault(x => x.Id.Equals(pickupPoint[0]));
+                        if (selectedPoint == null)
+                            throw new Exception("Pickup point is not allowed");
 
                         var pickUpInStoreShippingOption = new ShippingOption
                         {

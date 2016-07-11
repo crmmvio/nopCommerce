@@ -32,9 +32,9 @@ namespace Nop.Core.Domain.Shipping
         public bool AllowPickUpInStore { get; set; }
 
         /// <summary>
-        /// Gets or sets "pick up in store" fee (used with "AllowPickUpInStore" setting enabled)
+        /// Gets or sets a value indicating whether display a pickup points in the map
         /// </summary>
-        public decimal PickUpInStoreFee { get; set; }
+        public bool DisplayPickupPointsOnMap { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the system should use warehouse location when requesting shipping rates

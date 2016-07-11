@@ -189,9 +189,16 @@ namespace Nop.Web.Controllers
             if (order.ShippingStatus != ShippingStatus.ShippingNotRequired)
             {
                 model.IsShippable = true;
-                model.PickupInStore = order.PickUpInStore || order.PickupAddress != null;
-                if (model.PickupInStore)
+                model.PickUpInStore = order.PickUpInStore;
+                if (!order.PickUpInStore)
                 {
+                    model.ShippingAddress.PrepareModel(
+                        address: order.ShippingAddress,
+                        excludeProperties: false,
+                        addressSettings: _addressSettings,
+                        addressAttributeFormatter: _addressAttributeFormatter);
+                }
+                else
                     if (order.PickupAddress != null)
                         model.PickupAddress = new AddressModel
                         {
@@ -200,15 +207,6 @@ namespace Nop.Web.Controllers
                             CountryName = order.PickupAddress.Country != null ? order.PickupAddress.Country.Name : string.Empty,
                             ZipPostalCode = order.PickupAddress.ZipPostalCode
                         };
-                }
-                else
-                {
-                    model.ShippingAddress.PrepareModel(
-                        address: order.ShippingAddress,
-                        excludeProperties: false,
-                        addressSettings: _addressSettings,
-                        addressAttributeFormatter: _addressAttributeFormatter);
-                }
                 model.ShippingMethod = order.ShippingMethod;
    
 

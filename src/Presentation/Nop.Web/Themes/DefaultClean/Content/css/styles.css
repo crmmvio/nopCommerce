@@ -3514,14 +3514,22 @@ label, label + * {
 	color: #444;
 }
 
-.checkout-page .pickup-points {
-	padding: 30px 0;
+.checkout-page .pickup-in-store {
 	text-align: center;
 }
-.checkout-page .pickup-points .selector {
+.checkout-page .pickup-in-store .selector {
 	margin: 0 0 5px;
 	font-weight: bold;
 	color: #444;
+}
+
+.select-pickup-point {
+    text-align: center;
+}
+.checkout-page .pickup-points-map {
+	min-width: 400px;
+    min-height: 350px;
+    vertical-align: middle;
 }
 
 .shipping-method .method-list,
@@ -3735,7 +3743,7 @@ label, label + * {
 	margin: 0 0 30px;
 	padding: 0;
 }
-.opc .section.pickup-points {
+.opc .section.pickup-in-store {
 	margin: 0 0 30px;
 	padding: 0;
 }

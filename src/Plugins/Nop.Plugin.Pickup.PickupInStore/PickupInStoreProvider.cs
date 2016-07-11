@@ -1,11 +1,14 @@
-﻿using System.Web.Routing;
+﻿using System;
+using System.Web.Routing;
 using Nop.Core;
 using Nop.Core.Domain.Common;
 using Nop.Core.Domain.Shipping;
 using Nop.Core.Plugins;
 using Nop.Plugin.Pickup.PickupInStore.Data;
+using Nop.Plugin.Pickup.PickupInStore.Domain;
 using Nop.Plugin.Pickup.PickupInStore.Services;
 using Nop.Services.Common;
+using Nop.Services.Directory;
 using Nop.Services.Localization;
 using Nop.Services.Shipping;
 using Nop.Services.Shipping.Tracking;
@@ -17,6 +20,7 @@ namespace Nop.Plugin.Pickup.PickupInStore
         #region Fields
 
         private readonly IAddressService _addressService;
+        private readonly ICountryService _countryService;
         private readonly ILocalizationService _localizationService;
         private readonly IStoreContext _storeContext;
         private readonly IStorePickupPointService _storePickupPointService;
@@ -27,12 +31,14 @@ namespace Nop.Plugin.Pickup.PickupInStore
         #region Ctor
 
         public PickupInStoreProvider(IAddressService addressService,
+            ICountryService countryService,
             ILocalizationService localizationService,
             IStoreContext storeContext,
             IStorePickupPointService storePickupPointService,
             StorePickupPointObjectContext objectContext)
         {
             this._addressService = addressService;
+            this._countryService = countryService;
             this._localizationService = localizationService;
             this._storeContext = storeContext;
             this._storePickupPointService = storePickupPointService;
@@ -108,6 +114,27 @@ namespace Nop.Plugin.Pickup.PickupInStore
         {
             //database objects
             _objectContext.Install();
+
+            //sample pickup point
+            var country = _countryService.GetCountryByThreeLetterIsoCode("USA");
+            var address = new Address
+            {
+                Address1 = "21 West 52nd Street",
+                City = "New York",
+                CountryId = country != null ? (int?)country.Id : null,
+                ZipPostalCode = "10021",
+                CreatedOnUtc = DateTime.UtcNow
+            };
+            _addressService.InsertAddress(address);
+
+            var pickupPoint = new StorePickupPoint
+            {
+                Name = "Pickup point #1 (New York)",
+                AddressId = address.Id,
+                OpeningHours = "10.00 - 19.00",
+                PickupFee = 1.99m
+            };
+            _storePickupPointService.InsertStorePickupPoint(pickupPoint);
 
             //locales
             this.AddOrUpdatePluginLocaleResource("Plugins.Pickup.PickupInStore.AddNew", "Add a new pickup point");

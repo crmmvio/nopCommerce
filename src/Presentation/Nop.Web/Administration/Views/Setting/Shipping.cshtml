@@ -42,14 +42,14 @@
                                 @Html.ValidationMessageFor(model => model.AllowPickUpInStore)
                             </div>
                         </div>
-                        <div class="form-group advanced-setting" id="pnlPickUpInStoreFee">
+                        <div class="form-group advanced-setting" id="pnlDisplayPickupPointsOnMap">
                             <div class="col-md-3">
-                                @Html.OverrideStoreCheckboxFor(model => model.PickUpInStoreFee_OverrideForStore, model => model.PickUpInStoreFee, Model.ActiveStoreScopeConfiguration)
-                                @Html.NopLabelFor(model => model.PickUpInStoreFee)
+                                @Html.OverrideStoreCheckboxFor(model => model.DisplayPickupPointsOnMap_OverrideForStore, model => model.DisplayPickupPointsOnMap, Model.ActiveStoreScopeConfiguration)
+                                @Html.NopLabelFor(model => model.DisplayPickupPointsOnMap)
                             </div>
                             <div class="col-md-9">
-                                @Html.NopEditorFor(model => model.PickUpInStoreFee)
-                                @Html.ValidationMessageFor(model => model.PickUpInStoreFee)
+                                @Html.NopEditorFor(model => model.DisplayPickupPointsOnMap)
+                                @Html.ValidationMessageFor(model => model.DisplayPickupPointsOnMap)
                             </div>
                         </div>
                         <div class="form-group">
@@ -163,9 +163,9 @@
 
                         function toggleAllowPickUpInStore() {
                             if ($('#@Html.FieldIdFor(model => model.AllowPickUpInStore)').is(':checked')) {
-                                $('#pnlPickUpInStoreFee').show();
+                                $('#pnlDisplayPickupPointsOnMap').show();
                             } else {
-                                $('#pnlPickUpInStoreFee').hide();
+                                $('#pnlDisplayPickupPointsOnMap').hide();
                             }
                         }
 
