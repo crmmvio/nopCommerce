@@ -1098,7 +1098,7 @@ set @resources='
     <Value>Pickup</Value>
   </LocaleResource>
   <LocaleResource Name="Checkout.PickupPoints.Description">
-    <Value>Pick up your items at the pickup point</Value>
+    <Value>Pick up your items at the store</Value>
   </LocaleResource>
   <LocaleResource Name="Checkout.PickupPoints.Name">
     <Value>Pickup at {0}</Value>
