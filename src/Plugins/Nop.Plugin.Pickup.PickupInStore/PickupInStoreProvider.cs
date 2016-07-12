@@ -129,7 +129,7 @@ namespace Nop.Plugin.Pickup.PickupInStore
 
             var pickupPoint = new StorePickupPoint
             {
-                Name = "Pickup point #1 (New York)",
+                Name = "New York store",
                 AddressId = address.Id,
                 OpeningHours = "10.00 - 19.00",
                 PickupFee = 1.99m

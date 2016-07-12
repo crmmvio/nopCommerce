@@ -1025,11 +1025,20 @@ set @resources='
   <LocaleResource Name="Admin.Catalog.Products.Fields.StockQuantity.ChangedWarning">
     <Value>Quantity has been changed while you were editing the product. Changes haven''t been saved. Please ensure that everything is correct and click "Save" button one more time.</Value>
   </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Settings.Shipping.AllowPickUpInStore.Hint">
+    <Value>A value indicating whether "Pick Up in Store" option is enabled during checkout. Please ensure that you have at least one active pickup point provider.</Value>
+  </LocaleResource>
   <LocaleResource Name="Admin.Configuration.Settings.Shipping.DisplayPickupPointsOnMap">
     <Value>Display pickup points on the map</Value>
   </LocaleResource>
   <LocaleResource Name="Admin.Configuration.Settings.Shipping.DisplayPickupPointsOnMap.Hint">
     <Value>Check to display pickup points on the map.</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Settings.Shipping.GoogleMapsApiKey">
+    <Value>Google maps API key</Value>
+  </LocaleResource>
+  <LocaleResource Name="Admin.Configuration.Settings.Shipping.GoogleMapsApiKey.Hint">
+    <Value>Specify Google maps API key.</Value>
   </LocaleResource>
   <LocaleResource Name="Admin.Configuration.Settings.Shipping.PickUpInStoreFee">
     <Value></Value>
@@ -1090,9 +1099,6 @@ set @resources='
   </LocaleResource>
   <LocaleResource Name="Checkout.PickupPoints.Description">
     <Value>Pick up your items at the pickup point</Value>
-  </LocaleResource>
-  <LocaleResource Name="Checkout.PickupPoints.FreeShipping">
-    <Value>Free shipping</Value>
   </LocaleResource>
   <LocaleResource Name="Checkout.PickupPoints.Name">
     <Value>Pickup at {0}</Value>
@@ -3733,7 +3739,15 @@ GO
 IF NOT EXISTS (SELECT 1 FROM [Setting] WHERE [name] = N'shippingsettings.displaypickuppointsonmap')
 BEGIN
 	INSERT [Setting] ([Name], [Value], [StoreId])
-	VALUES (N'shippingsettings.displaypickuppointsonmap', N'true', 0)
+	VALUES (N'shippingsettings.displaypickuppointsonmap', N'false', 0)
+END
+GO
+
+--new setting
+IF NOT EXISTS (SELECT 1 FROM [Setting] WHERE [name] = N'shippingsettings.googlemapsapikey')
+BEGIN
+	INSERT [Setting] ([Name], [Value], [StoreId])
+	VALUES (N'shippingsettings.googlemapsapikey', N'', 0)
 END
 GO
 

@@ -214,6 +214,7 @@ namespace Nop.Web.Controllers
             if (model.AllowPickUpInStore)
             {
                 model.DisplayPickupPointsOnMap = _shippingSettings.DisplayPickupPointsOnMap;
+                model.GoogleMapsApiKey = _shippingSettings.GoogleMapsApiKey;
                 var pickupPointProviders = _shippingService.LoadActivePickupPointProviders(_storeContext.CurrentStore.Id);
                 if (pickupPointProviders.Any())
                 {
@@ -242,8 +243,6 @@ namespace Nop.Web.Controllers
                                 amount = _currencyService.ConvertFromPrimaryStoreCurrency(amount, _workContext.WorkingCurrency);
                                 pickupPointModel.PickupFee = _priceFormatter.FormatShippingPrice(amount, true);
                             }
-                            else
-                                pickupPointModel.PickupFee = _localizationService.GetResource("Checkout.PickupPoints.FreeShipping");
 
                             return pickupPointModel;
                         }).ToList();
@@ -256,7 +255,10 @@ namespace Nop.Web.Controllers
                 if (!_shippingService.LoadActiveShippingRateComputationMethods(_storeContext.CurrentStore.Id).Any())
                 {
                     if (!pickupPointProviders.Any())
+                    {
+                        model.Warnings.Add(_localizationService.GetResource("Checkout.ShippingIsNotAllowed"));
                         model.Warnings.Add(_localizationService.GetResource("Checkout.PickupPoints.NotAvailable"));
+                    }
                     model.PickUpInStoreOnly = true;
                     model.PickUpInStore = true;
                     return model;

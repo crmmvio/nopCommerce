@@ -2453,12 +2453,29 @@ namespace Nop.Web.Controllers
                             model.ShippingOptions.Add(soModel);
                         }
                     }
-                    else
-                        model.Warnings.Add(_localizationService.GetResource("Checkout.ShippingIsNotAllowed"));
                 }
                 else
                     foreach (var error in getShippingOptionResponse.Errors)
                         model.Warnings.Add(error);
+
+                var pickupPointsResponse = _shippingService.GetPickupPoints(address, null, _storeContext.CurrentStore.Id);
+                if (_shippingSettings.AllowPickUpInStore && pickupPointsResponse.PickupPoints.Any())
+                {
+                    var soModel = new EstimateShippingResultModel.ShippingOptionModel
+                    {
+                        Name = _localizationService.GetResource("Checkout.PickupPoints"),
+                        Description = _localizationService.GetResource("Checkout.PickupPoints.Description"),
+                    };
+                    var pickupFee = pickupPointsResponse.PickupPoints.Min(x => x.PickupFee);
+                    pickupFee = _taxService.GetShippingPrice(pickupFee, _workContext.CurrentCustomer);
+                    pickupFee = _currencyService.ConvertFromPrimaryStoreCurrency(pickupFee, _workContext.WorkingCurrency);
+                    soModel.Price = _priceFormatter.FormatShippingPrice(pickupFee, true);
+
+                    model.ShippingOptions.Add(soModel);
+                }
+                else
+                    if(!getShippingOptionResponse.ShippingOptions.Any())
+                        model.Warnings.Add(_localizationService.GetResource("Checkout.ShippingIsNotAllowed"));
             }
 
             return PartialView("_EstimateShippingResult", model);

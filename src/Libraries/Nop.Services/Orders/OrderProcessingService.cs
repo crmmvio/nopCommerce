@@ -580,7 +580,7 @@ namespace Nop.Services.Orders
                         throw new NopException(string.Format("Country '{0}' is not allowed for shipping", details.ShippingAddress.Country.Name));
                 }
                 else
-                    if (details.PickupAddress != null)
+                    if (details.InitialOrder.PickupAddress != null)
                         details.PickupAddress = (Address)details.InitialOrder.PickupAddress.Clone();
                 details.ShippingMethodName = details.InitialOrder.ShippingMethod;
                 details.ShippingRateComputationMethodSystemName = details.InitialOrder.ShippingRateComputationMethodSystemName;

@@ -37,6 +37,11 @@ namespace Nop.Core.Domain.Shipping
         public bool DisplayPickupPointsOnMap { get; set; }
 
         /// <summary>
+        /// Gets or sets Google map API key
+        /// </summary>
+        public string GoogleMapsApiKey { get; set; }
+        
+        /// <summary>
         /// Gets or sets a value indicating whether the system should use warehouse location when requesting shipping rates
         /// This is useful when you ship from multiple warehouses
         /// </summary>

@@ -20,6 +20,10 @@ namespace Nop.Admin.Models.Settings
         public bool DisplayPickupPointsOnMap { get; set; }
         public bool DisplayPickupPointsOnMap_OverrideForStore { get; set; }
 
+        [NopResourceDisplayName("Admin.Configuration.Settings.Shipping.GoogleMapsApiKey")]
+        public string GoogleMapsApiKey { get; set; }
+        public bool GoogleMapsApiKey_OverrideForStore { get; set; }
+
         [NopResourceDisplayName("Admin.Configuration.Settings.Shipping.UseWarehouseLocation")]
         public bool UseWarehouseLocation { get; set; }
         public bool UseWarehouseLocation_OverrideForStore { get; set; }

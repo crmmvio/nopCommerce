@@ -739,6 +739,7 @@ namespace Nop.Admin.Infrastructure.Mapper
                     .ForMember(dest => dest.AllowPickUpInStore_OverrideForStore, mo => mo.Ignore())
                     .ForMember(dest => dest.ShipToSameAddress_OverrideForStore, mo => mo.Ignore())
                     .ForMember(dest => dest.DisplayPickupPointsOnMap_OverrideForStore, mo => mo.Ignore())
+                    .ForMember(dest => dest.GoogleMapsApiKey_OverrideForStore, mo => mo.Ignore())
                     .ForMember(dest => dest.UseWarehouseLocation_OverrideForStore, mo => mo.Ignore())
                     .ForMember(dest => dest.NotifyCustomerAboutShippingFromMultipleLocations_OverrideForStore,
                         mo => mo.Ignore())
