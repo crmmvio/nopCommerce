@@ -324,7 +324,7 @@ namespace Nop.Services.ExportImport
                     var worksheet = xlPackage.Workbook.Worksheets.Add(typeof(T).Name);
                     //create Headers and format them 
 
-                    var manager = new PropertyManager<T>(properties);
+                    var manager = new PropertyManager<T>(properties.Where(p=>p.NeedExport).ToArray());
                     manager.WriteCaption(worksheet, SetCaptionStyle);
 
                     var row = 2;
@@ -660,122 +660,118 @@ namespace Nop.Services.ExportImport
             return stringWriter.ToString();
         }
 
+        private bool NeedExportPoductProperty(Func<ProductEditorSettings, bool> func)
+        {
+            var productAdvancedMode = _workContext.CurrentCustomer.GetAttribute<bool>("product-advanced-mode");
+            return !productAdvancedMode && func(_settingService.LoadSetting<ProductEditorSettings>());
+        }
+
         /// <summary>
         /// Export products to XLSX
         /// </summary>
         /// <param name="products">Products</param>
         public virtual byte[] ExportProductsToXlsx(IEnumerable<Product> products)
         {
+            
+            //var productEditorSettings = _settingService.LoadSetting<ProductEditorSettings>();
+            
             var properties = new[]
             {
-                new PropertyByName<Product>("ProductTypeId", p => p.ProductTypeId, "ProductType"),
-                new PropertyByName<Product>("ParentGroupedProductId", p => p.ParentGroupedProductId, "ProductType"),
-                new PropertyByName<Product>("VisibleIndividually", p => p.VisibleIndividually),
-                new PropertyByName<Product>("Name", p => p.Name, alwaysExport: true),
-                new PropertyByName<Product>("ShortDescription", p => p.ShortDescription, alwaysExport: true),
-                new PropertyByName<Product>("FullDescription", p => p.FullDescription, alwaysExport: true),
-                new PropertyByName<Product>("VendorId", p => p.VendorId.ToString(), "Vendor"),
-                new PropertyByName<Product>("ProductTemplateId", p => p.ProductTemplateId, "ProductTemplate"),
-                new PropertyByName<Product>("ShowOnHomePage", p => p.ShowOnHomePage),
-                new PropertyByName<Product>("MetaKeywords", p => p.MetaKeywords, "Seo"),
-                new PropertyByName<Product>("MetaDescription", p => p.MetaDescription, "Seo"),
-                new PropertyByName<Product>("MetaTitle", p => p.MetaTitle, "Seo"),
-                new PropertyByName<Product>("SeName", p => p.GetSeName(0), "Seo"),
-                new PropertyByName<Product>("AllowCustomerReviews", p => p.AllowCustomerReviews),
-                new PropertyByName<Product>("Published", p => p.Published),
-                new PropertyByName<Product>("SKU", p => p.Sku, alwaysExport: true),
-                new PropertyByName<Product>("ManufacturerPartNumber", p => p.ManufacturerPartNumber),
-                new PropertyByName<Product>("Gtin", p => p.Gtin, "GTIN"),
-                new PropertyByName<Product>("IsGiftCard", p => p.IsGiftCard),
-                new PropertyByName<Product>("GiftCardTypeId", p => p.GiftCardTypeId, "IsGiftCard"),
-                new PropertyByName<Product>("OverriddenGiftCardAmount", p => p.OverriddenGiftCardAmount, "IsGiftCard"),
-                new PropertyByName<Product>("RequireOtherProducts", p => p.RequireOtherProducts, "RequireOtherProductsAddedToTheCart"),
-                new PropertyByName<Product>("RequiredProductIds", p => p.RequiredProductIds, "RequireOtherProductsAddedToTheCart"),
-                new PropertyByName<Product>("AutomaticallyAddRequiredProducts", p => p.AutomaticallyAddRequiredProducts, "RequireOtherProductsAddedToTheCart"),
-                new PropertyByName<Product>("IsDownload", p => p.IsDownload, "DownloadableProduct"),
-                new PropertyByName<Product>("DownloadId", p => p.DownloadId, "DownloadableProduct"),
-                new PropertyByName<Product>("UnlimitedDownloads", p => p.UnlimitedDownloads, "DownloadableProduct"),
-                new PropertyByName<Product>("MaxNumberOfDownloads", p => p.MaxNumberOfDownloads, "DownloadableProduct"),
-                new PropertyByName<Product>("DownloadActivationTypeId", p => p.DownloadActivationTypeId, "DownloadableProduct"),
-                new PropertyByName<Product>("HasSampleDownload", p => p.HasSampleDownload, "DownloadableProduct"),
-                new PropertyByName<Product>("SampleDownloadId", p => p.SampleDownloadId, "DownloadableProduct"),
-                new PropertyByName<Product>("HasUserAgreement", p => p.HasUserAgreement, "DownloadableProduct"),
-                new PropertyByName<Product>("UserAgreementText", p => p.UserAgreementText, "DownloadableProduct"),
-                new PropertyByName<Product>("IsRecurring", p => p.IsRecurring, "RecurringProduct"),
-                new PropertyByName<Product>("RecurringCycleLength", p => p.RecurringCycleLength, "RecurringProduct"),
-                new PropertyByName<Product>("RecurringCyclePeriodId", p => p.RecurringCyclePeriodId, "RecurringProduct"),
-                new PropertyByName<Product>("RecurringTotalCycles", p => p.RecurringTotalCycles, "RecurringProduct"),
-                new PropertyByName<Product>("IsRental", p => p.IsRental),
-                new PropertyByName<Product>("RentalPriceLength", p => p.RentalPriceLength, "IsRental"),
-                new PropertyByName<Product>("RentalPricePeriodId", p => p.RentalPricePeriodId, "IsRental"),
-                new PropertyByName<Product>("IsShipEnabled", p => p.IsShipEnabled, alwaysExport: true),
-                new PropertyByName<Product>("IsFreeShipping", p => p.IsFreeShipping, "FreeShipping"),
-                new PropertyByName<Product>("ShipSeparately", p => p.ShipSeparately),
-                new PropertyByName<Product>("AdditionalShippingCharge", p => p.AdditionalShippingCharge),
-                new PropertyByName<Product>("DeliveryDateId", p => p.DeliveryDateId, "DeliveryDate"),
-                new PropertyByName<Product>("IsTaxExempt", p => p.IsTaxExempt, alwaysExport: true),
-                new PropertyByName<Product>("TaxCategoryId", p => p.TaxCategoryId, alwaysExport: true),
-                new PropertyByName<Product>("IsTelecommunicationsOrBroadcastingOrElectronicServices", p => p.IsTelecommunicationsOrBroadcastingOrElectronicServices, "TelecommunicationsBroadcastingElectronicServices"),
-                new PropertyByName<Product>("ManageInventoryMethodId", p => p.ManageInventoryMethodId, alwaysExport: true),
-                new PropertyByName<Product>("UseMultipleWarehouses", p => p.UseMultipleWarehouses),
-                new PropertyByName<Product>("WarehouseId", p => p.WarehouseId, "Warehouse"),
-                new PropertyByName<Product>("StockQuantity", p => p.StockQuantity, alwaysExport: true),
-                new PropertyByName<Product>("DisplayStockAvailability", p => p.DisplayStockAvailability),
-                new PropertyByName<Product>("DisplayStockQuantity", p => p.DisplayStockQuantity),
-                new PropertyByName<Product>("MinStockQuantity", p => p.MinStockQuantity, "MinimumStockQuantity"),
-                new PropertyByName<Product>("LowStockActivityId", p => p.LowStockActivityId, "LowStockActivity"),
-                new PropertyByName<Product>("NotifyAdminForQuantityBelow", p => p.NotifyAdminForQuantityBelow),
-                new PropertyByName<Product>("BackorderModeId", p => p.BackorderModeId, "Backorders"),
-                new PropertyByName<Product>("AllowBackInStockSubscriptions", p => p.AllowBackInStockSubscriptions),
-                new PropertyByName<Product>("OrderMinimumQuantity", p => p.OrderMinimumQuantity, "MinimumCartQuantity"),
-                new PropertyByName<Product>("OrderMaximumQuantity", p => p.OrderMaximumQuantity, "MaximumCartQuantity"),
-                new PropertyByName<Product>("AllowedQuantities", p => p.AllowedQuantities),
-                new PropertyByName<Product>("AllowAddingOnlyExistingAttributeCombinations", p => p.AllowAddingOnlyExistingAttributeCombinations),
-                new PropertyByName<Product>("DisableBuyButton", p => p.DisableBuyButton),
-                new PropertyByName<Product>("DisableWishlistButton", p => p.DisableWishlistButton),
-                new PropertyByName<Product>("AvailableForPreOrder", p => p.AvailableForPreOrder),
-                new PropertyByName<Product>("PreOrderAvailabilityStartDateTimeUtc", p => p.PreOrderAvailabilityStartDateTimeUtc, "AvailableForPreOrder"),
-                new PropertyByName<Product>("CallForPrice", p => p.CallForPrice),
-                new PropertyByName<Product>("Price", p => p.Price, alwaysExport: true),
-                new PropertyByName<Product>("OldPrice", p => p.OldPrice),
-                new PropertyByName<Product>("ProductCost", p => p.ProductCost),
-                new PropertyByName<Product>("SpecialPrice", p => p.SpecialPrice),
-                new PropertyByName<Product>("SpecialPriceStartDateTimeUtc", p => p.SpecialPriceStartDateTimeUtc, "SpecialPriceStartDate"),
-                new PropertyByName<Product>("SpecialPriceEndDateTimeUtc", p => p.SpecialPriceEndDateTimeUtc, "SpecialPriceEndDate"),
-                new PropertyByName<Product>("CustomerEntersPrice", p => p.CustomerEntersPrice),
-                new PropertyByName<Product>("MinimumCustomerEnteredPrice", p => p.MinimumCustomerEnteredPrice, "CustomerEntersPrice"),
-                new PropertyByName<Product>("MaximumCustomerEnteredPrice", p => p.MaximumCustomerEnteredPrice, "CustomerEntersPrice"),
-                new PropertyByName<Product>("BasepriceEnabled", p => p.BasepriceEnabled, "PAngV"),
-                new PropertyByName<Product>("BasepriceAmount", p => p.BasepriceAmount, "PAngV"),
-                new PropertyByName<Product>("BasepriceUnitId", p => p.BasepriceUnitId, "PAngV"),
-                new PropertyByName<Product>("BasepriceBaseAmount", p => p.BasepriceBaseAmount, "PAngV"),
-                new PropertyByName<Product>("BasepriceBaseUnitId", p => p.BasepriceBaseUnitId, "PAngV"),
-                new PropertyByName<Product>("MarkAsNew", p => p.MarkAsNew),
-                new PropertyByName<Product>("MarkAsNewStartDateTimeUtc", p => p.MarkAsNewStartDateTimeUtc, "MarkAsNewStartDate"),
-                new PropertyByName<Product>("MarkAsNewEndDateTimeUtc", p => p.MarkAsNewEndDateTimeUtc, "MarkAsNewEndDate"),
-                new PropertyByName<Product>("Weight", p => p.Weight, alwaysExport: true),
-                new PropertyByName<Product>("Length", p => p.Length, alwaysExport: true),
-                new PropertyByName<Product>("Width", p => p.Width, alwaysExport: true),
-                new PropertyByName<Product>("Height", p => p.Height, alwaysExport: true),
-                new PropertyByName<Product>("CategoryIds", GetCategoryIds, alwaysExport: true),
-                new PropertyByName<Product>("ManufacturerIds", GetManufacturerIds, alwaysExport: true),
-                new PropertyByName<Product>("Picture1", p => GetPictures(p)[0], alwaysExport: true),
-                new PropertyByName<Product>("Picture2", p => GetPictures(p)[1], alwaysExport: true),
-                new PropertyByName<Product>("Picture3", p => GetPictures(p)[2], alwaysExport: true)
+                new PropertyByName<Product>("ProductTypeId", p => p.ProductTypeId, NeedExportPoductProperty(p=>p.ProductType)),
+                new PropertyByName<Product>("ParentGroupedProductId", p => p.ParentGroupedProductId, NeedExportPoductProperty(p=>p.ProductType)),
+                new PropertyByName<Product>("VisibleIndividually", p => p.VisibleIndividually, NeedExportPoductProperty(p=>p.VisibleIndividually)),
+                new PropertyByName<Product>("Name", p => p.Name),
+                new PropertyByName<Product>("ShortDescription", p => p.ShortDescription),
+                new PropertyByName<Product>("FullDescription", p => p.FullDescription),
+                new PropertyByName<Product>("VendorId", p => p.VendorId.ToString(), NeedExportPoductProperty(p=>p.Vendor)),
+                new PropertyByName<Product>("ProductTemplateId", p => p.ProductTemplateId, NeedExportPoductProperty(p=>p.ProductTemplate)),
+                new PropertyByName<Product>("ShowOnHomePage", p => p.ShowOnHomePage, NeedExportPoductProperty(p=>p.ShowOnHomePage)),
+                new PropertyByName<Product>("MetaKeywords", p => p.MetaKeywords, NeedExportPoductProperty(p=>p.Seo)),
+                new PropertyByName<Product>("MetaDescription", p => p.MetaDescription, NeedExportPoductProperty(p=>p.Seo)),
+                new PropertyByName<Product>("MetaTitle", p => p.MetaTitle, NeedExportPoductProperty(p=>p.Seo)),
+                new PropertyByName<Product>("SeName", p => p.GetSeName(0), NeedExportPoductProperty(p=>p.Seo)),
+                new PropertyByName<Product>("AllowCustomerReviews", p => p.AllowCustomerReviews, NeedExportPoductProperty(p=>p.AllowCustomerReviews)),
+                new PropertyByName<Product>("Published", p => p.Published, NeedExportPoductProperty(p=>p.Published)),
+                new PropertyByName<Product>("SKU", p => p.Sku),
+                new PropertyByName<Product>("ManufacturerPartNumber", p => p.ManufacturerPartNumber, NeedExportPoductProperty(p=>p.ManufacturerPartNumber)),
+                new PropertyByName<Product>("Gtin", p => p.Gtin, NeedExportPoductProperty(p=>p.GTIN)),
+                new PropertyByName<Product>("IsGiftCard", p => p.IsGiftCard, NeedExportPoductProperty(p=>p.IsGiftCard)),
+                new PropertyByName<Product>("GiftCardTypeId", p => p.GiftCardTypeId, NeedExportPoductProperty(p=>p.IsGiftCard)),
+                new PropertyByName<Product>("OverriddenGiftCardAmount", p => p.OverriddenGiftCardAmount, NeedExportPoductProperty(p=>p.IsGiftCard)),
+                new PropertyByName<Product>("RequireOtherProducts", p => p.RequireOtherProducts, NeedExportPoductProperty(p=>p.RequireOtherProductsAddedToTheCart)),
+                new PropertyByName<Product>("RequiredProductIds", p => p.RequiredProductIds, NeedExportPoductProperty(p=>p.RequireOtherProductsAddedToTheCart)),
+                new PropertyByName<Product>("AutomaticallyAddRequiredProducts", p => p.AutomaticallyAddRequiredProducts, NeedExportPoductProperty(p=>p.RequireOtherProductsAddedToTheCart)),
+                new PropertyByName<Product>("IsDownload", p => p.IsDownload, NeedExportPoductProperty(p=>p.DownloadableProduct)),
+                new PropertyByName<Product>("DownloadId", p => p.DownloadId, NeedExportPoductProperty(p=>p.DownloadableProduct)),
+                new PropertyByName<Product>("UnlimitedDownloads", p => p.UnlimitedDownloads, NeedExportPoductProperty(p=>p.DownloadableProduct)),
+                new PropertyByName<Product>("MaxNumberOfDownloads", p => p.MaxNumberOfDownloads, NeedExportPoductProperty(p=>p.DownloadableProduct)),
+                new PropertyByName<Product>("DownloadActivationTypeId", p => p.DownloadActivationTypeId, NeedExportPoductProperty(p=>p.DownloadableProduct)),
+                new PropertyByName<Product>("HasSampleDownload", p => p.HasSampleDownload, NeedExportPoductProperty(p=>p.DownloadableProduct)),
+                new PropertyByName<Product>("SampleDownloadId", p => p.SampleDownloadId, NeedExportPoductProperty(p=>p.DownloadableProduct)),
+                new PropertyByName<Product>("HasUserAgreement", p => p.HasUserAgreement, NeedExportPoductProperty(p=>p.DownloadableProduct)),
+                new PropertyByName<Product>("UserAgreementText", p => p.UserAgreementText, NeedExportPoductProperty(p=>p.DownloadableProduct)),
+                new PropertyByName<Product>("IsRecurring", p => p.IsRecurring, NeedExportPoductProperty(p=>p.RecurringProduct)),
+                new PropertyByName<Product>("RecurringCycleLength", p => p.RecurringCycleLength, NeedExportPoductProperty(p=>p.RecurringProduct)),
+                new PropertyByName<Product>("RecurringCyclePeriodId", p => p.RecurringCyclePeriodId, NeedExportPoductProperty(p=>p.RecurringProduct)),
+                new PropertyByName<Product>("RecurringTotalCycles", p => p.RecurringTotalCycles, NeedExportPoductProperty(p=>p.RecurringProduct)),
+                new PropertyByName<Product>("IsRental", p => p.IsRental, NeedExportPoductProperty(p=>p.IsRental)),
+                new PropertyByName<Product>("RentalPriceLength", p => p.RentalPriceLength, NeedExportPoductProperty(p=>p.IsRental)),
+                new PropertyByName<Product>("RentalPricePeriodId", p => p.RentalPricePeriodId, NeedExportPoductProperty(p=>p.IsRental)),
+                new PropertyByName<Product>("IsShipEnabled", p => p.IsShipEnabled),
+                new PropertyByName<Product>("IsFreeShipping", p => p.IsFreeShipping, NeedExportPoductProperty(p=>p.FreeShipping)),
+                new PropertyByName<Product>("ShipSeparately", p => p.ShipSeparately, NeedExportPoductProperty(p=>p.ShipSeparately)),
+                new PropertyByName<Product>("AdditionalShippingCharge", p => p.AdditionalShippingCharge, NeedExportPoductProperty(p=>p.AdditionalShippingCharge)),
+                new PropertyByName<Product>("DeliveryDateId", p => p.DeliveryDateId, NeedExportPoductProperty(p=>p.DeliveryDate)),
+                new PropertyByName<Product>("IsTaxExempt", p => p.IsTaxExempt),
+                new PropertyByName<Product>("TaxCategoryId", p => p.TaxCategoryId),
+                new PropertyByName<Product>("IsTelecommunicationsOrBroadcastingOrElectronicServices", p => p.IsTelecommunicationsOrBroadcastingOrElectronicServices, NeedExportPoductProperty(p=>p.TelecommunicationsBroadcastingElectronicServices)),
+                new PropertyByName<Product>("ManageInventoryMethodId", p => p.ManageInventoryMethodId),
+                new PropertyByName<Product>("UseMultipleWarehouses", p => p.UseMultipleWarehouses, NeedExportPoductProperty(p=>p.UseMultipleWarehouses)),
+                new PropertyByName<Product>("WarehouseId", p => p.WarehouseId, NeedExportPoductProperty(p=>p.Warehouse)),
+                new PropertyByName<Product>("StockQuantity", p => p.StockQuantity),
+                new PropertyByName<Product>("DisplayStockAvailability", p => p.DisplayStockAvailability, NeedExportPoductProperty(p=>p.DisplayStockAvailability)),
+                new PropertyByName<Product>("DisplayStockQuantity", p => p.DisplayStockQuantity, NeedExportPoductProperty(p=>p.DisplayStockQuantity)),
+                new PropertyByName<Product>("MinStockQuantity", p => p.MinStockQuantity, NeedExportPoductProperty(p=>p.MinimumStockQuantity)),
+                new PropertyByName<Product>("LowStockActivityId", p => p.LowStockActivityId, NeedExportPoductProperty(p=>p.LowStockActivity)),
+                new PropertyByName<Product>("NotifyAdminForQuantityBelow", p => p.NotifyAdminForQuantityBelow, NeedExportPoductProperty(p=>p.NotifyAdminForQuantityBelow)),
+                new PropertyByName<Product>("BackorderModeId", p => p.BackorderModeId, NeedExportPoductProperty(p=>p.Backorders)),
+                new PropertyByName<Product>("AllowBackInStockSubscriptions", p => p.AllowBackInStockSubscriptions, NeedExportPoductProperty(p=>p.AllowBackInStockSubscriptions)),
+                new PropertyByName<Product>("OrderMinimumQuantity", p => p.OrderMinimumQuantity, NeedExportPoductProperty(p=>p.MinimumCartQuantity)),
+                new PropertyByName<Product>("OrderMaximumQuantity", p => p.OrderMaximumQuantity, NeedExportPoductProperty(p=>p.MaximumCartQuantity)),
+                new PropertyByName<Product>("AllowedQuantities", p => p.AllowedQuantities, NeedExportPoductProperty(p=>p.AllowedQuantities)),
+                new PropertyByName<Product>("AllowAddingOnlyExistingAttributeCombinations", p => p.AllowAddingOnlyExistingAttributeCombinations, NeedExportPoductProperty(p=>p.AllowAddingOnlyExistingAttributeCombinations)),
+                new PropertyByName<Product>("DisableBuyButton", p => p.DisableBuyButton, NeedExportPoductProperty(p=>p.DisableBuyButton)),
+                new PropertyByName<Product>("DisableWishlistButton", p => p.DisableWishlistButton, NeedExportPoductProperty(p=>p.DisableWishlistButton)),
+                new PropertyByName<Product>("AvailableForPreOrder", p => p.AvailableForPreOrder, NeedExportPoductProperty(p=>p.AvailableForPreOrder)),
+                new PropertyByName<Product>("PreOrderAvailabilityStartDateTimeUtc", p => p.PreOrderAvailabilityStartDateTimeUtc, NeedExportPoductProperty(p=>p.AvailableForPreOrder)),
+                new PropertyByName<Product>("CallForPrice", p => p.CallForPrice, NeedExportPoductProperty(p=>p.CallForPrice)),
+                new PropertyByName<Product>("Price", p => p.Price),
+                new PropertyByName<Product>("OldPrice", p => p.OldPrice, NeedExportPoductProperty(p=>p.OldPrice)),
+                new PropertyByName<Product>("ProductCost", p => p.ProductCost, NeedExportPoductProperty(p=>p.ProductCost)),
+                new PropertyByName<Product>("SpecialPrice", p => p.SpecialPrice, NeedExportPoductProperty(p=>p.SpecialPrice)),
+                new PropertyByName<Product>("SpecialPriceStartDateTimeUtc", p => p.SpecialPriceStartDateTimeUtc, NeedExportPoductProperty(p=>p.SpecialPriceStartDate)),
+                new PropertyByName<Product>("SpecialPriceEndDateTimeUtc", p => p.SpecialPriceEndDateTimeUtc, NeedExportPoductProperty(p=>p.SpecialPriceEndDate)),
+                new PropertyByName<Product>("CustomerEntersPrice", p => p.CustomerEntersPrice, NeedExportPoductProperty(p=>p.CustomerEntersPrice)),
+                new PropertyByName<Product>("MinimumCustomerEnteredPrice", p => p.MinimumCustomerEnteredPrice, NeedExportPoductProperty(p=>p.CustomerEntersPrice)),
+                new PropertyByName<Product>("MaximumCustomerEnteredPrice", p => p.MaximumCustomerEnteredPrice, NeedExportPoductProperty(p=>p.CustomerEntersPrice)),
+                new PropertyByName<Product>("BasepriceEnabled", p => p.BasepriceEnabled, NeedExportPoductProperty(p=>p.PAngV)),
+                new PropertyByName<Product>("BasepriceAmount", p => p.BasepriceAmount, NeedExportPoductProperty(p=>p.PAngV)),
+                new PropertyByName<Product>("BasepriceUnitId", p => p.BasepriceUnitId, NeedExportPoductProperty(p=>p.PAngV)),
+                new PropertyByName<Product>("BasepriceBaseAmount", p => p.BasepriceBaseAmount, NeedExportPoductProperty(p=>p.PAngV)),
+                new PropertyByName<Product>("BasepriceBaseUnitId", p => p.BasepriceBaseUnitId, NeedExportPoductProperty(p=>p.PAngV)),
+                new PropertyByName<Product>("MarkAsNew", p => p.MarkAsNew, NeedExportPoductProperty(p=>p.MarkAsNew)),
+                new PropertyByName<Product>("MarkAsNewStartDateTimeUtc", p => p.MarkAsNewStartDateTimeUtc, NeedExportPoductProperty(p=>p.MarkAsNewStartDate)),
+                new PropertyByName<Product>("MarkAsNewEndDateTimeUtc", p => p.MarkAsNewEndDateTimeUtc, NeedExportPoductProperty(p=>p.MarkAsNewEndDate)),
+                new PropertyByName<Product>("Weight", p => p.Weight),
+                new PropertyByName<Product>("Length", p => p.Length),
+                new PropertyByName<Product>("Width", p => p.Width),
+                new PropertyByName<Product>("Height", p => p.Height),
+                new PropertyByName<Product>("CategoryIds", GetCategoryIds),
+                new PropertyByName<Product>("ManufacturerIds", GetManufacturerIds),
+                new PropertyByName<Product>("Picture1", p => GetPictures(p)[0]),
+                new PropertyByName<Product>("Picture2", p => GetPictures(p)[1]),
+                new PropertyByName<Product>("Picture3", p => GetPictures(p)[2])
             };
-
-            var productAdvancedMode = _workContext.CurrentCustomer.GetAttribute<bool>("product-advanced-mode");
-
-            if (!productAdvancedMode)
-            {
-                var productEditorSettings = _settingService.LoadSetting<ProductEditorSettings>();
-
-                var names = typeof(ProductEditorSettings).GetProperties()
-                    .Where(p => p.PropertyType == typeof(bool))
-                    .Where(p => Convert.ToBoolean(p.GetValue(productEditorSettings)))
-                    .Select(p => p.Name).ToList();
-                properties = properties.Where(p => p.AlwaysExport || p.ContainsIn(names)).ToArray();
-            }
 
             return ExportToXlsx(properties, products);
         }
